@@ -173,6 +173,7 @@ async function generate() {
 
 function reshuffle() {
   stopPolling();
+  uriToIndices = {};
   generatedTracks = shuffle([...generatedTracks]);
   renderResults();
 }

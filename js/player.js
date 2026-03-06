@@ -1,29 +1,25 @@
 // ── Now-playing poll ──────────────────────────────────────────────────────────
-const POLL_INTERVAL = 2000; // 2s — snappy enough to follow skips
+const POLL_INTERVAL = 2000;
+
+// sessionQueue: Set of all URIs we queued — used to detect if Spotify wandered
+// uriToIndices: map of uri → [index, ...] (supports duplicate tracks)
+let sessionQueue  = new Set();
+let sessionPaused = false;
+
+function registerUri(uri, index) {
+  if (!uriToIndices[uri]) uriToIndices[uri] = [];
+  if (!uriToIndices[uri].includes(index)) uriToIndices[uri].push(index);
+}
 
 function startPolling() {
   stopPolling();
-  // Poll immediately on start, then on interval
-  pollNowPlaying();
   pollTimer = setInterval(pollNowPlaying, POLL_INTERVAL);
 }
 
 function stopPolling() {
   if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
-  // Reset index so next highlight always fires even if same track
   nowPlayingIndex = -1;
 }
-
-function buildUriMap() {
-  const map = {};
-  generatedTracks.forEach((t, i) => {
-    if (!map[t.uri]) map[t.uri] = i;
-  });
-  return map;
-}
-
-let _uriMap = null;
-let _uriMapGeneration = null;
 
 async function pollNowPlaying() {
   try {
@@ -35,21 +31,31 @@ async function pollNowPlaying() {
     if (!data?.item) return;
     const uri = data.item.uri;
 
-    // Rebuild map if generation changed (new mixtape or reshuffle)
-    if (_uriMapGeneration !== generatedTracks) {
-      _uriMap = buildUriMap();
-      _uriMapGeneration = generatedTracks;
+    // If Spotify is playing something outside our session, clear highlight
+    if (sessionQueue.size > 0 && !sessionQueue.has(uri)) {
+      if (!sessionPaused) {
+        sessionPaused = true;
+        highlightNowPlaying(-1);
+      }
+      return;
     }
+    sessionPaused = false;
 
-    const idx = _uriMap[uri];
-    if (idx !== undefined && idx !== nowPlayingIndex) {
-      highlightNowPlaying(idx);
+    // Find which track index matches — prefer index >= current to handle
+    // duplicates correctly when advancing forward through the list
+    const candidates = uriToIndices[uri];
+    if (!candidates) return;
+    let best = candidates[0];
+    for (const idx of candidates) {
+      if (idx >= nowPlayingIndex) { best = idx; break; }
     }
-  } catch { /* ignore poll errors */ }
+    highlightNowPlaying(best);
+
+  } catch { /* ignore transient errors */ }
 }
 
 function highlightNowPlaying(index) {
-  // Remove previous highlight
+  // Always update — don't bail on same index, DOM may need re-applying after reshuffle
   document.querySelectorAll('.track-item.now-playing').forEach(r => r.classList.remove('now-playing'));
   if (index >= 0) {
     const row = document.getElementById('track-' + index);
@@ -67,10 +73,18 @@ async function playFromTrack(i, silent = false) {
   try {
     const ok = await spotifyPlay(uris);
     if (!ok) throw new Error('no active device');
-    // Highlight immediately — don't wait for next poll tick
+
+    // Register all URIs so polling can find them
+    uriToIndices = {};
+    generatedTracks.forEach((t, j) => registerUri(t.uri, j));
+    sessionQueue  = new Set(generatedTracks.map(t => t.uri));
+    sessionPaused = false;
+
     highlightNowPlaying(i);
     startPolling();
-    if (!silent) showToast(i === 0 ? `Playing ${generatedTracks.length} tracks` : `Playing from track ${i + 1}`);
+    if (!silent) showToast(i === 0
+      ? `Playing ${generatedTracks.length} tracks`
+      : `Playing from track ${i + 1}`);
   } catch {
     if (!silent) showError('Playback failed. Open Spotify on any device first, then try again.');
   }
@@ -78,6 +92,5 @@ async function playFromTrack(i, silent = false) {
 
 async function autoPlay() {
   if (!generatedTracks.length) return;
-  // Small delay to ensure DOM has rendered before we highlight track 0
   setTimeout(() => playFromTrack(0, true), 150);
 }

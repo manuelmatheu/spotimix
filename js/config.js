@@ -18,5 +18,6 @@ let generatedTracks = [];
 let rawTracks       = {};
 let nowPlayingIndex = -1;
 let pollTimer       = null;
+let uriToIndices    = {};
 const artists       = [null, null, null];
 const searchTimers  = {};
