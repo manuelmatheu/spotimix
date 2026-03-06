@@ -4,7 +4,7 @@ const LASTFM_API_KEY    = '177b9e8ee70fe2325bfff606cfdaee23';
 const REDIRECT_URI      = window.location.origin + window.location.pathname;
 const SCOPES = [
   'user-read-private','user-read-email',
-  'user-modify-playback-state',
+  'user-modify-playback-state','user-read-playback-state','user-read-currently-playing',
   'playlist-modify-public','playlist-modify-private',
 ].join(' ');
 

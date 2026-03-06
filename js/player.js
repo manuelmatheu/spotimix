@@ -1,5 +1,5 @@
 // ── Now-playing poll ──────────────────────────────────────────────────────────
-const POLL_INTERVAL = 2000;
+const POLL_INTERVAL = 5000;
 
 let sessionQueue  = new Set();
 let sessionPaused = false;
@@ -7,6 +7,11 @@ let sessionPaused = false;
 function registerUri(uri, index) {
   if (!uriToIndices[uri]) uriToIndices[uri] = [];
   if (!uriToIndices[uri].includes(index)) uriToIndices[uri].push(index);
+}
+
+function buildUriMap() {
+  uriToIndices = {};
+  generatedTracks.forEach((t, i) => registerUri(t.uri, i));
 }
 
 function startPolling() {
@@ -27,10 +32,11 @@ async function pollNowPlaying() {
     if (r.status === 204 || !r.ok) return;
     const data = await r.json();
     if (!data?.item) return;
-    const uri = data.item.uri;
 
-    // If Spotify drifted to something outside our session, clear highlight
-    if (sessionQueue.size > 0 && !sessionQueue.has(uri)) {
+    const playingUri = data.item.uri;
+
+    // Session check: is Spotify playing one of our queued tracks?
+    if (sessionQueue.size > 0 && !sessionQueue.has(playingUri)) {
       if (!sessionPaused) {
         sessionPaused = true;
         highlightNowPlaying(-1);
@@ -39,18 +45,21 @@ async function pollNowPlaying() {
     }
     sessionPaused = false;
 
-    const candidates = uriToIndices[uri];
-    if (!candidates) return;
-    // Prefer the first index >= current so we advance forward through duplicates
-    let best = candidates[0];
-    for (const idx of candidates) {
-      if (idx >= nowPlayingIndex) { best = idx; break; }
+    // Update now-playing highlight using reverse map
+    if (uriToIndices[playingUri]) {
+      const candidates = uriToIndices[playingUri];
+      let best = candidates[0];
+      // Prefer the one closest to (and >=) the current highlight
+      for (const idx of candidates) {
+        if (idx >= nowPlayingIndex) { best = idx; break; }
+      }
+      highlightNowPlaying(best);
     }
-    highlightNowPlaying(best);
   } catch { /* ignore transient errors */ }
 }
 
 function highlightNowPlaying(index) {
+  if (index === nowPlayingIndex) return;
   document.querySelectorAll('.track-item.now-playing').forEach(r => r.classList.remove('now-playing'));
   if (index >= 0) {
     const row = document.getElementById('track-' + index);
@@ -66,14 +75,11 @@ async function playFromTrack(i, silent = false) {
   const uris = generatedTracks.slice(i).map(t => t.uri);
   if (!uris.length) return;
   try {
-    // Pass ALL uris directly — Spotify queues them natively, no separate queue calls needed.
-    // This also works when Spotify is idle (device not active) via the device fallback.
     const ok = await spotifyPlay(uris);
     if (!ok) throw new Error('no device');
 
     // Build URI index map over the full list so polling can track any track
-    uriToIndices = {};
-    generatedTracks.forEach((t, j) => registerUri(t.uri, j));
+    buildUriMap();
     // sessionQueue only contains what we actually sent to Spotify
     sessionQueue  = new Set(uris);
     sessionPaused = false;
