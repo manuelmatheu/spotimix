@@ -19,6 +19,9 @@
     <span class="logo-eyebrow">/ A–Side</span>
     <h1 class="logo">Mix<em>tape</em></h1>
     <p class="tagline">Blend up to 3 artists into one shuffled playlist.</p>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle dark/light mode" aria-label="Toggle theme">
+      <span class="theme-icon">☽</span>
+    </button>
   </header>
 
   <section id="auth-section">
@@ -126,14 +129,14 @@
 <div class="toast" id="toast"></div>
 
 <!-- Footer -->
-<footer style="position:relative;z-index:1;width:100%;max-width:780px;padding:24px 24px 40px;font-family:var(--font-m);font-size:10px;letter-spacing:0.06em;color:var(--ink);opacity:0.4;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;border-top:1px solid rgba(26,18,8,0.08);">
+<footer style="position:relative;z-index:1;width:100%;max-width:780px;padding:24px 24px 40px;font-family:var(--font-m);font-size:10px;letter-spacing:0.06em;color:var(--fg);opacity:0.4;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;border-top:1px solid var(--border-s);">
   <span>
     Powered by <a href="https://www.last.fm/api" target="_blank" style="color:inherit;text-decoration:underline;">Last.fm API</a>
     &amp; <a href="https://developer.spotify.com/" target="_blank" style="color:inherit;text-decoration:underline;">Spotify Web API</a>
   </span>
   <span>
     Built with <a href="https://claude.ai" target="_blank" style="color:inherit;text-decoration:underline;">Claude</a> by Anthropic
-    &middot; <a href="#changelog" onclick="document.getElementById('changelog-modal').classList.add('open');return false;" style="color:inherit;text-decoration:underline;">v0.6</a>
+    &middot; <a href="#changelog" onclick="document.getElementById('changelog-modal').classList.add('open');return false;" style="color:inherit;text-decoration:underline;">v0.7</a>
   </span>
 </footer>
 
@@ -146,32 +149,39 @@
     </div>
     <div style="font-family:var(--font-m);font-size:11px;line-height:1.8;opacity:0.75;">
       <div style="margin-bottom:16px;">
-        <div style="font-weight:500;color:var(--rust);margin-bottom:4px;">v0.6 &mdash; Current</div>
+        <div style="font-weight:500;color:var(--rust);margin-bottom:4px;">v0.7 &mdash; Current</div>
+        <div>&middot; Dark / light theme toggle with system preference detection</div>
+        <div>&middot; Fixed now-playing highlight (added missing Spotify read scopes)</div>
+        <div>&middot; Fixed save playlist (tracks now actually added, not just empty playlist)</div>
+        <div>&middot; Playlist opens in Spotify after save</div>
+      </div>
+      <div style="margin-bottom:16px;">
+        <div style="font-weight:500;color:var(--fg);opacity:0.5;margin-bottom:4px;">v0.6</div>
         <div>&middot; Artist search now uses Spotify only (cleaner results)</div>
         <div>&middot; Now-playing highlight follows track skips in real time (poll every 2s)</div>
         <div>&middot; Polling fires immediately on playback start, not after first interval</div>
         <div>&middot; Removed stale map guard that prevented highlight updates</div>
       </div>
       <div style="margin-bottom:16px;">
-        <div style="font-weight:500;color:var(--ink);opacity:0.5;margin-bottom:4px;">v0.5</div>
+        <div style="font-weight:500;color:var(--fg);opacity:0.5;margin-bottom:4px;">v0.5</div>
         <div>&middot; Now-playing highlight: current track highlighted in rust red</div>
         <div>&middot; Click any track to play from that point, queuing the rest</div>
         <div>&middot; Play icon replaces track number on hover and while playing</div>
         <div>&middot; Split into css/ and js/ files, cassette favicon</div>
       </div>
       <div style="margin-bottom:16px;">
-        <div style="font-weight:500;color:var(--ink);opacity:0.5;margin-bottom:4px;">v0.4</div>
+        <div style="font-weight:500;color:var(--fg);opacity:0.5;margin-bottom:4px;">v0.4</div>
         <div>&middot; Discovery mode: adds 2 tracks each from 3 similar artists per selection</div>
         <div>&middot; Similar artists sourced from Last.fm, deduplicated across selections</div>
         <div>&middot; Discovery badge on tracks from similar artists</div>
       </div>
       <div style="margin-bottom:16px;">
-        <div style="font-weight:500;color:var(--ink);opacity:0.5;margin-bottom:4px;">v0.3</div>
+        <div style="font-weight:500;color:var(--fg);opacity:0.5;margin-bottom:4px;">v0.3</div>
         <div>&middot; Auto-play on generation (starts first track, queues the rest)</div>
         <div>&middot; Fixed 403 error when saving playlists to Spotify</div>
       </div>
       <div style="margin-bottom:16px;">
-        <div style="font-weight:500;color:var(--ink);opacity:0.5;margin-bottom:4px;">v0.2</div>
+        <div style="font-weight:500;color:var(--fg);opacity:0.5;margin-bottom:4px;">v0.2</div>
         <div>&middot; Switched to Last.fm for artist track discovery</div>
         <div>&middot; Deep Cuts = Last.fm ranks 11&ndash;50 by scrobble count</div>
         <div>&middot; Dual artist search: Spotify + Last.fm merged results</div>
@@ -181,7 +191,7 @@
         <div>&middot; Unmatched track warning in results</div>
       </div>
       <div>
-        <div style="font-weight:500;color:var(--ink);opacity:0.5;margin-bottom:4px;">v0.1</div>
+        <div style="font-weight:500;color:var(--fg);opacity:0.5;margin-bottom:4px;">v0.1</div>
         <div>&middot; Spotify PKCE OAuth</div>
         <div>&middot; 3 artist slots with live search autocomplete</div>
         <div>&middot; Top Hits / Deep Cuts / Mix modes</div>
@@ -193,6 +203,33 @@
   </div>
 </div>
 
+<script>
+// Theme toggle — runs early to prevent flash
+(function() {
+  const saved = sessionStorage.getItem('mixtape_theme');
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const theme = saved || (prefersDark ? 'dark' : 'light');
+  if (theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+  updateThemeIcon(theme);
+  function updateThemeIcon(t) {
+    requestAnimationFrame(() => {
+      const icon = document.querySelector('.theme-icon');
+      if (icon) icon.textContent = t === 'dark' ? '☀' : '☽';
+    });
+  }
+  window.toggleTheme = function() {
+    const current = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+    const next = current === 'dark' ? 'light' : 'dark';
+    if (next === 'dark') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+    }
+    sessionStorage.setItem('mixtape_theme', next);
+    updateThemeIcon(next);
+  };
+})();
+</script>
 <script src="js/config.js"></script>
 <script src="js/spotify.js"></script>
 <script src="js/lastfm.js"></script>
