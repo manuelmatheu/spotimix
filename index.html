@@ -176,6 +176,7 @@
     .track-badge { font-family: var(--font-m); font-size: 8px; letter-spacing: 0.1em; text-transform: uppercase; padding: 2px 6px; border-radius: 2px; flex-shrink: 0; }
     .badge-top  { background: var(--gold); color: var(--ink); }
     .badge-deep { background: var(--sage); color: var(--cream); }
+    .badge-discovery { background: var(--ink); color: var(--cream); }
     .track-duration { font-family: var(--font-m); font-size: 11px; opacity: 0.35; flex-shrink: 0; }
 
     /* Modal */
@@ -249,6 +250,7 @@
           <button class="seg-btn active" onclick="setMode('top',this)">Top Hits</button>
           <button class="seg-btn" onclick="setMode('deep',this)">Deep Cuts</button>
           <button class="seg-btn" onclick="setMode('mix',this)">Mix</button>
+          <button class="seg-btn" onclick="setMode('discovery',this)">Discovery</button>
         </div>
       </div>
       <div class="option-group">
@@ -330,7 +332,7 @@
   </span>
   <span>
     Built with <a href="https://claude.ai" target="_blank" style="color:inherit;text-decoration:underline;">Claude</a> by Anthropic
-    &middot; <a href="#changelog" onclick="document.getElementById('changelog-modal').classList.add('open');return false;" style="color:inherit;text-decoration:underline;">v0.3</a>
+    &middot; <a href="#changelog" onclick="document.getElementById('changelog-modal').classList.add('open');return false;" style="color:inherit;text-decoration:underline;">v0.4</a>
   </span>
 </footer>
 
@@ -343,7 +345,13 @@
     </div>
     <div style="font-family:var(--font-m);font-size:11px;line-height:1.8;opacity:0.75;">
       <div style="margin-bottom:16px;">
-        <div style="font-weight:500;color:var(--rust);margin-bottom:4px;">v0.3 &mdash; Current</div>
+        <div style="font-weight:500;color:var(--rust);margin-bottom:4px;">v0.4 &mdash; Current</div>
+        <div>&middot; Discovery mode: adds 2 tracks each from 3 similar artists per selection</div>
+        <div>&middot; Similar artists sourced from Last.fm, deduplicated across selections</div>
+        <div>&middot; Discovery badge on tracks from similar artists</div>
+      </div>
+      <div style="margin-bottom:16px;">
+        <div style="font-weight:500;color:var(--ink);opacity:0.5;margin-bottom:4px;">v0.3</div>
         <div>&middot; Auto-play on generation (starts first track, queues the rest)</div>
         <div>&middot; Fixed 403 error when saving playlists to Spotify</div>
       </div>
@@ -461,6 +469,54 @@ async function lfm(params) {
   const r = await fetch('https://ws.audioscrobbler.com/2.0/?' + p);
   if (!r.ok) throw new Error('Last.fm ' + r.status);
   return r.json();
+}
+
+
+// ── Similar artist fetching ───────────────────────────────────────────────────
+async function getSimilarArtists(artistNames, limit = 3) {
+  // Fetch similar for all selected artists in parallel
+  const results = await Promise.allSettled(
+    artistNames.map(name => lfm({ method: 'artist.getSimilar', artist: name, limit: 10 }))
+  );
+
+  const selectedNorm = new Set(artistNames.map(norm));
+  const seen   = new Set();
+  const similar = [];
+
+  for (const res of results) {
+    if (res.status !== 'fulfilled') continue;
+    const raw = res.value.similarartists?.artist || [];
+    const items = Array.isArray(raw) ? raw : [raw];
+    for (const a of items) {
+      if (!a?.name) continue;
+      const key = norm(a.name);
+      // Skip if already selected by user or already added
+      if (selectedNorm.has(key) || seen.has(key)) continue;
+      seen.add(key);
+      similar.push(a.name);
+      if (similar.length >= limit) break;
+    }
+    if (similar.length >= limit) break;
+  }
+
+  return similar;
+}
+
+async function getDiscoveryTracks(similarArtistNames) {
+  const tracks = [];
+  for (const name of similarArtistNames) {
+    try {
+      const data = await lfm({ method: 'artist.getTopTracks', artist: name, limit: 5 });
+      const raw  = data.toptracks?.track || [];
+      const all  = (Array.isArray(raw) ? raw : [raw]).filter(t => t?.name);
+      // Take 2 top tracks per similar artist
+      const picked = all.slice(0, 2).map(t => ({ ...t, _type: 'discovery', _similarArtist: name }));
+      tracks.push(...picked);
+    } catch {
+      // Skip artists that fail silently
+    }
+  }
+  return tracks;
 }
 
 // ── Artist search (parallel merge) ───────────────────────────────────────────
@@ -677,10 +733,20 @@ async function generate() {
   rawTracks = {};
 
   try {
-    // Phase 1: Last.fm
+    // Phase 1: Last.fm — main artists
     for (let i = 0; i < active.length; i++) {
-      setProgress(Math.round((i / active.length) * 40), `Fetching Last.fm tracks for ${active[i].name}…`);
+      setProgress(Math.round((i / active.length) * 30), `Fetching Last.fm tracks for ${active[i].name}…`);
       rawTracks[active[i].name] = await getTracksForArtist(active[i]);
+    }
+
+    // Phase 1b: Discovery mode — fetch similar artists + their tracks
+    if (trackMode === 'discovery') {
+      setProgress(32, 'Finding similar artists…');
+      const activeNames   = active.map(a => a.name);
+      const similarNames  = await getSimilarArtists(activeNames, 3 * active.length);
+      setProgress(40, `Fetching tracks for ${similarNames.length} similar artists…`);
+      const discoveryTracks = await getDiscoveryTracks(similarNames);
+      rawTracks['__discovery__'] = discoveryTracks;
     }
 
     // Phase 2: Spotify matching (3 concurrent)
@@ -792,7 +858,9 @@ function renderResults(missingCount) {
       : `<div class="track-thumb"></div>`;
     const badge = t._type === 'deep'
       ? `<span class="track-badge badge-deep">Deep</span>`
-      : `<span class="track-badge badge-top">Top</span>`;
+      : t._type === 'discovery'
+        ? `<span class="track-badge badge-discovery">Discovery</span>`
+        : `<span class="track-badge badge-top">Top</span>`;
     const plays = t._playcount
       ? `<div class="track-scrobbles">${fmtNum(t._playcount)} scrobbles</div>` : '';
     return `<div class="track-item">
