@@ -970,8 +970,11 @@ function renderResults(missingCount) {
         : `<span class="track-badge badge-top">Top</span>`;
     const plays = t._playcount
       ? `<div class="track-scrobbles">${fmtNum(t._playcount)} scrobbles</div>` : '';
-    return `<div class="track-item">
-      <span class="track-num">${i+1}</span>
+    return `<div class="track-item" id="track-${i}" onclick="playFromTrack(${i})">
+      <div class="track-num-wrap">
+        <span class="track-num">${i+1}</span>
+        <span class="track-play-icon">▶</span>
+      </div>
       ${imgEl}
       <div class="track-info">
         <div class="track-name">${esc(t.name)}</div>
