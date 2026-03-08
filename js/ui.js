@@ -337,7 +337,7 @@ function fmtNum(n) { if(n>=1e6) return (n/1e6).toFixed(1)+'M'; if(n>=1e3) return
 function norm(s) { return String(s).toLowerCase().replace(/[^a-z0-9]/g,''); }
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-// ── Mix context (Last.fm-powered narrative) ──────────────────────────────────
+// ── Mix context (Claude-powered narrative with Last.fm fallback) ──────────────
 function toggleContext() {
   document.getElementById('mix-context').classList.toggle('collapsed');
 }
@@ -366,8 +366,64 @@ async function generateContext(artistList, similarNames, mode, tracks) {
   const uniqueTags = [...tagSet].slice(0, 12);
   tagsEl.innerHTML = uniqueTags.map(t => `<span class="context-tag">${esc(t)}</span>`).join('');
 
-  // Build the narrative
+  // Try Claude API first, fall back to Last.fm-only narrative
+  if (ANTHROPIC_API_KEY) {
+    const claudeText = await tryClaudeNarrative(artistNames, allTags, allBios, similarNames, mode, tracks);
+    if (claudeText) {
+      textEl.innerHTML = claudeText;
+      return;
+    }
+  }
+
+  // Fallback: Last.fm-only narrative
   textEl.innerHTML = buildNarrative(artistNames, allTags, allBios, similarNames, mode, tracks);
+}
+
+async function tryClaudeNarrative(artistNames, allTags, allBios, similarNames, mode, tracks) {
+  const artistCtx = artistNames.map((name, i) => {
+    const tags = allTags[i].join(', ') || 'unknown genre';
+    const bio  = allBios[i] ? allBios[i].substring(0, 200) : '';
+    return `- ${name}: genres [${tags}]${bio ? '. ' + bio : ''}`;
+  }).join('\n');
+
+  const trackSample = tracks.slice(0, 12).map(t => `${t.name} by ${t.artist}`).join(', ');
+  const modeLabel = { top: 'Top Hits', deep: 'Deep Cuts', mix: 'Mix (top + deep)', discovery: 'Discovery (with similar artists)' }[mode] || mode;
+
+  const prompt = `You are a warm, knowledgeable radio DJ introducing a personalized music mix. Write 2-3 sentences (max 60 words) explaining what the listener is about to hear and why these artists work together. Be specific about musical qualities, not generic. Use the tone of Pandora's Music Genome Project explanations — warm but informed.
+
+Artists in this mix:
+${artistCtx}
+
+${similarNames?.length ? 'Similar artists also included: ' + similarNames.join(', ') : ''}
+
+Mode: ${modeLabel}
+Sample tracks: ${trackSample}
+Total tracks: ${tracks.length}
+
+Write ONLY the paragraph, no intro like "You're about to hear" or "This mix features". Jump right into describing the sound and connection. Use <em> tags around 1-2 key musical descriptors for emphasis.`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 200,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    });
+
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.content?.find(b => b.type === 'text')?.text || null;
+  } catch {
+    return null;
+  }
 }
 
 function buildNarrative(names, allTags, allBios, similarNames, mode, tracks) {
