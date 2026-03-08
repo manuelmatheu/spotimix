@@ -174,6 +174,7 @@ function renderSlot(idx) {
 // ── Entry toggle (Search / Browse) ────────────────────────────────────────────
 let entryMode = 'search';
 let genresLoaded = false;
+let selectedGenres = new Set();
 
 function setEntry(mode) {
   entryMode = mode;
@@ -195,38 +196,101 @@ async function loadGenres() {
     return;
   }
 
-  grid.innerHTML = tags.map((t, i) =>
-    `<button class="genre-chip" onclick="selectGenre(this,'${esc(t)}')" style="animation-delay:${Math.min(i * 20, 400)}ms">${esc(t)}</button>`
-  ).join('');
+  renderGenreGrid(tags);
   genresLoaded = true;
 }
 
-async function selectGenre(chip, tag) {
-  // Visual feedback
-  document.querySelectorAll('.genre-chip.selected').forEach(c => c.classList.remove('selected'));
-  chip.classList.add('selected');
+function renderGenreGrid(tags) {
+  const grid = document.getElementById('genre-grid');
+  grid.innerHTML = tags.map((t, i) =>
+    `<button class="genre-chip${selectedGenres.has(t) ? ' selected' : ''}" onclick="toggleGenre(this,'${esc(t)}')" style="animation-delay:${Math.min(i * 20, 400)}ms">${esc(t)}</button>`
+  ).join('') + '<div class="genre-go-wrap" id="genre-go-wrap" style="display:none;"><button class="btn btn-primary" onclick="applyGenres()">Find artists</button></div>';
+  updateGenreGoBtn();
+}
 
-  showToast(`Finding artists for "${tag}"…`);
+function toggleGenre(chip, tag) {
+  if (selectedGenres.has(tag)) {
+    selectedGenres.delete(tag);
+    chip.classList.remove('selected');
+  } else {
+    if (selectedGenres.size >= 3) {
+      showToast('Max 3 genres at a time');
+      return;
+    }
+    selectedGenres.add(tag);
+    chip.classList.add('selected');
+  }
+  updateGenreGoBtn();
+}
 
-  const topArtists = await getTopArtistsForTag(tag, 10);
-  if (topArtists.length < 1) {
-    showError(`No artists found for "${tag}".`);
+function updateGenreGoBtn() {
+  const wrap = document.getElementById('genre-go-wrap');
+  if (wrap) wrap.style.display = selectedGenres.size > 0 ? '' : 'none';
+}
+
+async function applyGenres() {
+  const tags = [...selectedGenres];
+  if (!tags.length) return;
+
+  showToast(`Finding artists for ${tags.join(' + ')}…`);
+
+  // Fetch top artist names from Last.fm for each tag
+  const allNames = [];
+  for (const tag of tags) {
+    const lfmArtists = await getTopArtistsForTag(tag, 8);
+    allNames.push(...lfmArtists.map(a => a.name));
+  }
+
+  // Deduplicate names
+  const seen = new Set();
+  const uniqueNames = allNames.filter(n => { const k = norm(n); if (seen.has(k)) return false; seen.add(k); return true; });
+
+  // Shuffle and take up to 6 candidates, then search Spotify for each
+  const candidates = uniqueNames.sort(() => Math.random() - 0.5).slice(0, 6);
+  const spotifyMatches = [];
+
+  for (const name of candidates) {
+    if (spotifyMatches.length >= 3) break;
+    try {
+      const data = await spGet(`/search?type=artist&q=${encodeURIComponent(name)}&limit=1`);
+      const item = data.artists?.items?.[0];
+      if (item && norm(item.name) === norm(name)) {
+        spotifyMatches.push({
+          name:  item.name,
+          image: item.images?.[1]?.url || item.images?.[0]?.url || '',
+          sub:   item.followers?.total ? fmtNum(item.followers.total) + ' followers' : '',
+        });
+      }
+    } catch { /* skip */ }
+  }
+
+  if (!spotifyMatches.length) {
+    showError('Could not find matching artists on Spotify.');
     return;
   }
 
-  // Pick 3 (with some randomness so it's not always the same)
-  const shuffled = topArtists.length > 3
-    ? topArtists.sort(() => Math.random() - 0.5).slice(0, 3)
-    : topArtists.slice(0, 3);
+  // Fill slots
+  for (let i = 0; i < 3; i++) artists[i] = spotifyMatches[i] || null;
 
-  // Fill artist slots
-  for (let i = 0; i < 3; i++) artists[i] = shuffled[i] || null;
-
-  // Switch to search view to show filled slots
+  // Switch to search view
   setEntry('search');
   renderAllSlots();
   updateComboSaveBtn();
-  showToast(`${shuffled.length} artists from "${tag}" — hit Generate!`);
+  showToast(`${spotifyMatches.length} artists from ${tags.join(' + ')} — hit Generate!`);
+}
+
+// Browse from a context tag (About this mix panel)
+async function browseFromTag(tag) {
+  selectedGenres.clear();
+  selectedGenres.add(tag.toLowerCase());
+  setEntry('browse');
+  if (genresLoaded) {
+    // Re-render to show selection, preserving the cached tags
+    const tags = await getTopTags();
+    renderGenreGrid(tags);
+  }
+  // Scroll to top
+  document.querySelector('.entry-header')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // ── Options ───────────────────────────────────────────────────────────────────
@@ -422,7 +486,7 @@ async function generateContext(artistList, similarNames, mode, tracks) {
   const tagSet = new Set();
   allTags.flat().forEach(t => tagSet.add(t));
   const uniqueTags = [...tagSet].slice(0, 12);
-  tagsEl.innerHTML = uniqueTags.map(t => `<span class="context-tag">${esc(t)}</span>`).join('');
+  tagsEl.innerHTML = uniqueTags.map(t => `<span class="context-tag clickable" onclick="browseFromTag('${esc(t)}')">${esc(t)}</span>`).join('');
 
   // Build Last.fm narrative
   textEl.innerHTML = buildNarrative(artistNames, allTags, allBios, similarNames, mode, tracks);

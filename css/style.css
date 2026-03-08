@@ -312,6 +312,17 @@
       text-transform: uppercase; padding: 3px 8px; border-radius: 2px;
       background: var(--num-bg); color: var(--fg); opacity: 0.6;
     }
+    .context-tag.clickable {
+      cursor: pointer; transition: opacity 120ms, background 120ms;
+    }
+    .context-tag.clickable:hover {
+      opacity: 1; background: var(--rust); color: var(--bg);
+    }
+
+    /* Genre go button */
+    .genre-go-wrap {
+      width: 100%; padding-top: 8px;
+    }
 
     /* Track list */
     .track-list { border: 1.5px solid var(--border); border-radius: var(--r); overflow: hidden; }
