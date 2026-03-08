@@ -19,7 +19,6 @@ let rawTracks       = {};
 let nowPlayingIndex = -1;
 let pollTimer       = null;
 let uriToIndices    = {};
-const ANTHROPIC_API_KEY = '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';
 const artists       = [null, null, null];
 const searchTimers  = {};
 let savedCombos     = [];  // [{artists: [{name, image, sub},...]}]

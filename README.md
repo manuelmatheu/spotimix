@@ -48,8 +48,21 @@ mixtape/
 
 - **Vanilla HTML/JS** — no framework, no build step
 - **Spotify Web API** — PKCE OAuth, search, playback, playlist creation
-- **Last.fm API** — artist top tracks, similar artists
+- **Last.fm API** — artist top tracks, similar artists, genre tags, bios
+- **Anthropic Claude API** — optional, for AI-generated liner notes
 - **GitHub Pages** — static hosting
+
+---
+
+## AI Liner Notes
+
+SpotiMix can generate warm, Pandora-style liner notes explaining the musical connection between your selected artists. This requires an Anthropic API key (Claude Sonnet).
+
+1. Get a key at [console.anthropic.com](https://console.anthropic.com)
+2. In SpotiMix, click the "AI liner notes" indicator in the user bar (or press `K`)
+3. Paste your key — it's stored only in your browser session, never in the repo
+
+Without a key, you'll still get genre-based context built from Last.fm tags, bios, and similar artist data.
 
 ---
 
@@ -62,6 +75,7 @@ mixtape/
 | `G` | Generate mix |
 | `S` | Save current combo |
 | `D` | Toggle dark / light mode |
+| `K` | API key settings |
 | `↑` `↓` | Navigate autocomplete |
 | `Enter` | Select autocomplete result |
 
@@ -102,6 +116,20 @@ Push to a GitHub repo with Pages enabled (Settings → Pages → Deploy from `ma
 ---
 
 ## Changelog
+
+### v1.0
+- AI liner notes: optional Anthropic API key for Claude-written mix context
+- Secure key handling via sessionStorage (never stored in repo)
+- AI status indicator in user bar with settings modal
+- Last.fm-powered narrative as free fallback
+- Keyboard shortcut: `K` for API key settings
+
+### v0.9
+- "About this mix" collapsible panel with Last.fm-powered liner notes
+- Narrative engine built from genre tags, artist bios, shared/unique traits
+- Adapts to track mode (deep cuts, discovery, etc.)
+- Genre tag chips
+- Renamed to SpotiMix
 
 ### v0.8
 - Saved combos: store and recall artist combinations

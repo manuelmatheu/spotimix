@@ -100,7 +100,18 @@
 
     .user-bar { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--tape-bg); border-radius: var(--r); border: 1px solid var(--border); margin-bottom: 32px; }
     .user-bar-left { display: flex; align-items: center; gap: 8px; font-family: var(--font-m); font-size: 11px; opacity: 0.65; }
+    .user-bar-right { display: flex; align-items: center; gap: 10px; }
     .user-dot { width: 7px; height: 7px; border-radius: 50%; background: #1DB954; box-shadow: 0 0 0 2px rgba(29,185,84,0.25); }
+
+    .ai-status {
+      display: flex; align-items: center; gap: 6px;
+      background: none; border: none; cursor: pointer;
+      font-family: var(--font-m); font-size: 10px; color: var(--fg); opacity: 0.45;
+      padding: 4px 8px; border-radius: var(--r); transition: opacity 120ms;
+    }
+    .ai-status:hover { opacity: 0.85; }
+    .ai-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--fg); opacity: 0.25; flex-shrink: 0; transition: all 200ms; }
+    .ai-dot.on { background: var(--gold); opacity: 1; box-shadow: 0 0 0 2px rgba(212,168,67,0.25); }
 
     .section-label { font-family: var(--font-m); font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; opacity: 0.4; margin-bottom: 12px; }
 

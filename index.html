@@ -38,7 +38,13 @@
         <div class="user-dot"></div>
         <span id="username-label">Connected</span>
       </div>
-      <button class="btn btn-ghost" onclick="logout()" style="padding:4px 8px;font-size:10px;">Disconnect</button>
+      <div class="user-bar-right">
+        <button class="ai-status" onclick="openKeyModal()" title="Configure AI liner notes">
+          <span class="ai-dot" id="ai-status-dot"></span>
+          <span class="ai-status-text" id="ai-status-label">AI liner notes off</span>
+        </button>
+        <button class="btn btn-ghost" onclick="logout()" style="padding:4px 8px;font-size:10px;">Disconnect</button>
+      </div>
     </div>
 
     <div class="api-key-bar" id="api-key-bar">
@@ -163,9 +169,26 @@
   </span>
   <span>
     Built with <a href="https://claude.ai" target="_blank" style="color:inherit;text-decoration:underline;">Claude</a> by Anthropic
-    &middot; <a href="#changelog" onclick="document.getElementById('changelog-modal').classList.add('open');return false;" style="color:inherit;text-decoration:underline;">v0.9</a>
+    &middot; <a href="#changelog" onclick="document.getElementById('changelog-modal').classList.add('open');return false;" style="color:inherit;text-decoration:underline;">v1.0</a>
   </span>
 </footer>
+
+<!-- API key modal -->
+<div class="modal-overlay" id="key-modal">
+  <div class="modal" style="max-width:420px;">
+    <h2 class="modal-title">AI Liner Notes</h2>
+    <p style="font-size:13px;opacity:0.7;line-height:1.6;margin-bottom:16px;">
+      Paste an Anthropic API key to get Claude-written liner notes for each mix. Without a key, you'll still get genre-based context from Last.fm. The key is stored only in your browser session — never sent anywhere except Anthropic's API.
+    </p>
+    <label class="field-label" for="key-input">Anthropic API key</label>
+    <input class="text-input" type="password" id="key-input" placeholder="sk-ant-..." />
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="document.getElementById('key-modal').classList.remove('open')">Cancel</button>
+      <button class="btn btn-ghost" onclick="setAnthropicKey('');document.getElementById('key-modal').classList.remove('open');showToast('API key removed');" style="color:var(--rust);">Remove key</button>
+      <button class="btn btn-primary" onclick="saveKey()">Save</button>
+    </div>
+  </div>
+</div>
 
 <!-- Changelog modal -->
 <div class="modal-overlay" id="changelog-modal">
@@ -176,7 +199,15 @@
     </div>
     <div style="font-family:var(--font-m);font-size:11px;line-height:1.8;opacity:0.75;overflow-y:auto;flex:1;">
       <div style="margin-bottom:16px;">
-        <div style="font-weight:500;color:var(--rust);margin-bottom:4px;">v0.9 &mdash; Current</div>
+        <div style="font-weight:500;color:var(--rust);margin-bottom:4px;">v1.0 &mdash; Current</div>
+        <div>&middot; AI liner notes: paste an Anthropic API key for Claude-written mix context</div>
+        <div>&middot; Secure key handling: stored in sessionStorage only, never in the repo</div>
+        <div>&middot; AI status indicator in user bar with settings modal</div>
+        <div>&middot; Last.fm-powered narrative as free fallback (genre tags, bios, shared traits)</div>
+        <div>&middot; Keyboard shortcut: <kbd style="font-family:var(--font-m);font-size:9px;background:var(--num-bg);border:1px solid var(--border);border-radius:2px;padding:1px 4px;">K</kbd> to open API key settings</div>
+      </div>
+      <div style="margin-bottom:16px;">
+        <div style="font-weight:500;color:var(--fg);opacity:0.5;margin-bottom:4px;">v0.9</div>
         <div>&middot; "About this mix" panel with Last.fm-powered liner notes</div>
         <div>&middot; Narrative built from genre tags, artist bios, shared/unique traits</div>
         <div>&middot; Adapts to track mode (deep cuts, discovery, etc.)</div>
@@ -258,6 +289,7 @@
       <div class="shortcut-row"><kbd>G</kbd><span>Generate mix</span></div>
       <div class="shortcut-row"><kbd>S</kbd><span>Save combo</span></div>
       <div class="shortcut-row"><kbd>D</kbd><span>Toggle dark / light mode</span></div>
+      <div class="shortcut-row"><kbd>K</kbd><span>API key settings</span></div>
       <div class="shortcut-row"><kbd>↑</kbd> <kbd>↓</kbd><span>Navigate autocomplete</span></div>
       <div class="shortcut-row"><kbd>Enter</kbd><span>Select autocomplete result</span></div>
     </div>

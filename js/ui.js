@@ -342,6 +342,37 @@ function toggleContext() {
   document.getElementById('mix-context').classList.toggle('collapsed');
 }
 
+function getAnthropicKey() {
+  return sessionStorage.getItem('anthropic_key') || '';
+}
+
+function setAnthropicKey(key) {
+  if (key) sessionStorage.setItem('anthropic_key', key);
+  else sessionStorage.removeItem('anthropic_key');
+  updateKeyStatus();
+}
+
+function updateKeyStatus() {
+  const dot = document.getElementById('ai-status-dot');
+  const label = document.getElementById('ai-status-label');
+  if (!dot || !label) return;
+  const has = !!getAnthropicKey();
+  dot.className = 'ai-dot' + (has ? ' on' : '');
+  label.textContent = has ? 'AI liner notes on' : 'AI liner notes off';
+}
+
+function openKeyModal() {
+  document.getElementById('key-input').value = getAnthropicKey();
+  document.getElementById('key-modal').classList.add('open');
+}
+
+function saveKey() {
+  const val = document.getElementById('key-input').value.trim();
+  setAnthropicKey(val);
+  document.getElementById('key-modal').classList.remove('open');
+  showToast(val ? 'API key saved for this session' : 'API key removed');
+}
+
 async function generateContext(artistList, similarNames, mode, tracks) {
   const panel  = document.getElementById('mix-context');
   const textEl = document.getElementById('context-text');
@@ -367,8 +398,9 @@ async function generateContext(artistList, similarNames, mode, tracks) {
   tagsEl.innerHTML = uniqueTags.map(t => `<span class="context-tag">${esc(t)}</span>`).join('');
 
   // Try Claude API first, fall back to Last.fm-only narrative
-  if (ANTHROPIC_API_KEY) {
-    const claudeText = await tryClaudeNarrative(artistNames, allTags, allBios, similarNames, mode, tracks);
+  const apiKey = getAnthropicKey();
+  if (apiKey) {
+    const claudeText = await tryClaudeNarrative(apiKey, artistNames, allTags, allBios, similarNames, mode, tracks);
     if (claudeText) {
       textEl.innerHTML = claudeText;
       return;
@@ -379,7 +411,7 @@ async function generateContext(artistList, similarNames, mode, tracks) {
   textEl.innerHTML = buildNarrative(artistNames, allTags, allBios, similarNames, mode, tracks);
 }
 
-async function tryClaudeNarrative(artistNames, allTags, allBios, similarNames, mode, tracks) {
+async function tryClaudeNarrative(apiKey, artistNames, allTags, allBios, similarNames, mode, tracks) {
   const artistCtx = artistNames.map((name, i) => {
     const tags = allTags[i].join(', ') || 'unknown genre';
     const bio  = allBios[i] ? allBios[i].substring(0, 200) : '';
@@ -407,7 +439,7 @@ Write ONLY the paragraph, no intro like "You're about to hear" or "This mix feat
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': ANTHROPIC_API_KEY,
+        'x-api-key': apiKey,
         'anthropic-version': '2023-06-01',
         'anthropic-dangerous-direct-browser-access': 'true',
       },
@@ -595,6 +627,7 @@ document.addEventListener('keydown', e => {
   if (e.key === 'g' || e.key === 'G') { e.preventDefault(); generate(); return; }
   if (e.key === 's' || e.key === 'S') { e.preventDefault(); saveCombo(); return; }
   if (e.key === 'd' || e.key === 'D') { e.preventDefault(); toggleTheme(); return; }
+  if (e.key === 'k' || e.key === 'K') { e.preventDefault(); openKeyModal(); return; }
 });
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
@@ -613,6 +646,7 @@ async function init() {
       renderAllSlots();
       loadCombos();
       renderCombos();
+      updateKeyStatus();
     } catch {
       sessionStorage.removeItem('spotify_token');
     }
