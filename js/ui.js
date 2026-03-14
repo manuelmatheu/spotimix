@@ -334,7 +334,49 @@ function setEntry(mode) {
   document.getElementById('entry-search-panel').style.display = mode === 'search' ? '' : 'none';
   document.getElementById('entry-browse-panel').style.display = mode === 'browse' ? '' : 'none';
 
-  if (mode === 'browse' && !genresLoaded) loadGenres();
+  if (mode === 'browse') {
+    renderMoodPresets();
+    if (!genresLoaded) loadGenres();
+  }
+}
+
+// ── Mood Presets ──────────────────────────────────────────────────────────────
+const MOOD_PRESETS = [
+  { name: 'Melancholy',     emoji: '🌧', tags: ['sad', 'melancholy', 'ambient'],              mode: 'deep' },
+  { name: 'Late Night',     emoji: '🌙', tags: ['electronic', 'chillwave', 'synthwave'],      mode: 'mix' },
+  { name: 'Sunday Morning', emoji: '☀️', tags: ['acoustic', 'folk', 'singer-songwriter'],     mode: 'top' },
+  { name: 'Raw Energy',     emoji: '⚡', tags: ['punk', 'garage rock', 'post-punk'],           mode: 'top' },
+  { name: 'Dreamy',         emoji: '💭', tags: ['shoegaze', 'dream pop', 'ethereal'],          mode: 'deep' },
+  { name: 'Soul Kitchen',   emoji: '🎷', tags: ['soul', 'funk', 'rnb'],                       mode: 'mix' },
+  { name: 'Deep Focus',     emoji: '🎧', tags: ['post-rock', 'minimal', 'instrumental'],      mode: 'deep' },
+  { name: 'Midnight Jazz',  emoji: '🍷', tags: ['jazz', 'smooth jazz', 'bossa nova'],         mode: 'mix' },
+  { name: 'Headbanger',     emoji: '🤘', tags: ['metal', 'heavy metal', 'thrash metal'],      mode: 'top' },
+  { name: 'Tropicália',     emoji: '🌴', tags: ['latin', 'bossa nova', 'tropicalia'],         mode: 'mix' },
+];
+
+function renderMoodPresets() {
+  const grid = document.getElementById('mood-grid');
+  grid.innerHTML = MOOD_PRESETS.map((m, i) =>
+    `<button class="mood-card" onclick="applyMood(${i})" style="animation-delay:${i * 30}ms">
+      <span class="mood-emoji">${m.emoji}</span>
+      <span class="mood-name">${esc(m.name)}</span>
+    </button>`
+  ).join('');
+}
+
+async function applyMood(idx) {
+  const mood = MOOD_PRESETS[idx];
+  if (!mood) return;
+
+  // Set the track mode
+  setModeByName(mood.mode);
+
+  // Pre-select the mood's tags and trigger applyGenres
+  selectedGenres.clear();
+  mood.tags.forEach(t => selectedGenres.add(t));
+
+  showToast(`${mood.emoji} ${mood.name} — finding artists…`);
+  await applyGenres();
 }
 
 async function loadGenres() {
@@ -450,6 +492,15 @@ function setMode(m, btn) {
   trackMode = m;
   document.querySelectorAll('#mode-control .seg-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
+}
+
+function setModeByName(m) {
+  trackMode = m;
+  const modeMap = { top: 'Top Hits', deep: 'Deep Cuts', mix: 'Mix', discovery: 'Discovery' };
+  const label = modeMap[m];
+  document.querySelectorAll('#mode-control .seg-btn').forEach(b => {
+    b.classList.toggle('active', b.textContent === label);
+  });
 }
 
 function adjustTracks(d) {

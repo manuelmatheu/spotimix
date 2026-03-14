@@ -118,6 +118,29 @@
     .entry-btn.active { background: var(--bg); opacity: 1; box-shadow: 0 1px 3px var(--shadow); }
     [data-theme="dark"] .entry-btn.active { background: var(--fg); color: var(--bg); }
 
+    /* Mood presets */
+    .mood-presets { margin-bottom: 20px; }
+    .mood-grid {
+      display: flex; gap: 8px; flex-wrap: wrap;
+    }
+    .mood-card {
+      display: flex; align-items: center; gap: 7px;
+      padding: 8px 14px; border-radius: var(--r);
+      background: var(--surface); border: 1.5px solid var(--border);
+      cursor: pointer; transition: border-color 120ms, box-shadow 120ms, transform 80ms;
+      animation: fadeIn 200ms ease both;
+    }
+    .mood-card:hover {
+      border-color: var(--fg); box-shadow: 2px 2px 0 var(--card-shadow);
+      transform: translate(-1px,-1px);
+    }
+    .mood-card:active { transform: translateY(0); box-shadow: none; }
+    .mood-emoji { font-size: 16px; line-height: 1; }
+    .mood-name {
+      font-family: var(--font-m); font-size: 11px; letter-spacing: 0.04em;
+      color: var(--fg);
+    }
+
     /* Genre grid */
     .genre-grid {
       display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px;
@@ -183,6 +206,9 @@
       .genre-chip { font-size: 10px; padding: 6px 10px; }
       .entry-btn { padding: 6px 10px; font-size: 9px; }
       .suggest-chip { font-size: 9px; padding: 4px 8px; }
+      .mood-card { padding: 6px 10px; }
+      .mood-emoji { font-size: 14px; }
+      .mood-name { font-size: 10px; }
 
       .context-text { font-size: 13px; }
 
