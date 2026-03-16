@@ -188,6 +188,31 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- Player bar -->
+<div class="player-bar" id="player-bar">
+  <img class="pb-art" id="pb-art" src="" alt="" />
+  <div class="pb-info">
+    <div class="pb-name" id="pb-name"></div>
+    <div class="pb-artist" id="pb-artist"></div>
+  </div>
+  <div class="pb-controls">
+    <button class="pb-btn" onclick="playerPrev()" title="Previous">⏮</button>
+    <button class="pb-btn pb-play" id="pb-play" onclick="playerTogglePlay()" title="Play/Pause">▶</button>
+    <button class="pb-btn" onclick="playerNext()" title="Next">⏭</button>
+  </div>
+  <div class="pb-progress-wrap">
+    <span class="pb-time" id="pb-elapsed">0:00</span>
+    <div class="pb-progress" id="pb-progress" onclick="playerSeek(event)">
+      <div class="pb-progress-fill" id="pb-progress-fill"></div>
+    </div>
+    <span class="pb-time" id="pb-remaining">-0:00</span>
+  </div>
+  <div class="pb-volume-wrap">
+    <span class="pb-volume-icon">🔊</span>
+    <input class="pb-volume" type="range" min="0" max="1" step="0.01" value="0.8" oninput="playerVolume(event)" />
+  </div>
+</div>
+
 <!-- Footer -->
 <footer style="position:relative;z-index:1;width:100%;max-width:780px;padding:24px 24px 40px;font-family:var(--font-m);font-size:10px;letter-spacing:0.06em;color:var(--fg);opacity:0.4;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;border-top:1px solid var(--border-s);">
   <span>
@@ -196,7 +221,7 @@
   </span>
   <span>
     Built with ❤ by Manuel Matheu with <a href="https://claude.ai" target="_blank" style="color:inherit;text-decoration:underline;">Claude</a> by Anthropic
-    &middot; <a href="#changelog" onclick="document.getElementById('changelog-modal').classList.add('open');return false;" style="color:inherit;text-decoration:underline;">v1.4</a>
+    &middot; <a href="#changelog" onclick="document.getElementById('changelog-modal').classList.add('open');return false;" style="color:inherit;text-decoration:underline;">v1.5</a>
   </span>
 </footer>
 
@@ -209,7 +234,15 @@
     </div>
     <div style="font-family:var(--font-m);font-size:11px;line-height:1.8;opacity:0.75;overflow-y:auto;flex:1;">
       <div style="margin-bottom:16px;">
-        <div style="font-weight:500;color:var(--rust);margin-bottom:4px;">v1.4 &mdash; Current</div>
+        <div style="font-weight:500;color:var(--rust);margin-bottom:4px;">v1.5 &mdash; Current</div>
+        <div>&middot; Embedded player: Spotify Web Playback SDK streams audio directly in-browser</div>
+        <div>&middot; Persistent player bar with album art, controls, seekable progress bar, volume</div>
+        <div>&middot; Real-time track updates via SDK events (no more 5s polling delay)</div>
+        <div>&middot; Automatic fallback to remote control when SDK unavailable</div>
+        <div>&middot; Prev / Play-Pause / Next / Seek / Volume controls</div>
+      </div>
+      <div style="margin-bottom:16px;">
+        <div style="font-weight:500;color:var(--fg);opacity:0.5;margin-bottom:4px;">v1.4</div>
         <div>&middot; Tag Mix: new parallel mix flow &mdash; pick genres or moods, generate directly from tags</div>
         <div>&middot; Tracks sourced from Last.fm tag.getTopTracks, matched on Spotify</div>
         <div>&middot; Tracks-per-tag slider (1&ndash;10)</div>
@@ -362,6 +395,7 @@
   };
 })();
 </script>
+<script src="https://sdk.scdn.co/spotify-player.js"></script>
 <script src="js/config.js"></script>
 <script src="js/spotify.js"></script>
 <script src="js/lastfm.js"></script>

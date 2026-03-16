@@ -119,15 +119,24 @@ async function transferPlayback(deviceId) {
 }
 
 async function spotifyPlay(uris) {
-  // First, find the active device (or pick one)
+  // If SDK player is ready, target it
+  if (sdkReady && sdkDeviceId) {
+    const r = await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${sdkDeviceId}`, {
+      method: 'PUT',
+      headers: { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ uris }),
+    });
+    if (r.ok || r.status === 204) return true;
+    // SDK play failed — fall through to remote
+  }
+
+  // Remote fallback: find the active device (or pick one)
   const devices = await getDevices();
   let device = devices.find(d => d.is_active);
 
   if (!device) {
-    // No active device — find one and transfer playback to it
     device = devices.find(d => !d.is_restricted) || devices[0];
     if (!device) {
-      // Last resort: try playing without device_id (might wake a sleeping client)
       const r = await fetch('https://api.spotify.com/v1/me/player/play', {
         method: 'PUT',
         headers: { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
@@ -138,7 +147,6 @@ async function spotifyPlay(uris) {
     await transferPlayback(device.id);
   }
 
-  // Play on the active device explicitly
   const r = await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${device.id}`, {
     method: 'PUT',
     headers: { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
@@ -212,4 +220,99 @@ async function savePlaylist() {
       showError('Could not save: ' + e.message);
     }
   }
+}
+
+// ── Spotify Web Playback SDK ──────────────────────────────────────────────────
+function initSDKPlayer() {
+  if (!window.Spotify) return;
+  sdkPlayer = new Spotify.Player({
+    name: 'SpotiMix',
+    getOAuthToken: cb => { cb(accessToken); },
+    volume: 0.8,
+  });
+
+  sdkPlayer.addListener('ready', ({ device_id }) => {
+    sdkDeviceId = device_id;
+    sdkReady = true;
+    console.log('SDK ready, device:', device_id);
+  });
+
+  sdkPlayer.addListener('not_ready', () => {
+    sdkReady = false;
+    console.log('SDK device not ready');
+  });
+
+  sdkPlayer.addListener('player_state_changed', state => {
+    if (!state) return;
+    lastSDKState = state;
+    onSDKStateChange(state);
+  });
+
+  sdkPlayer.addListener('initialization_error', ({ message }) => {
+    console.warn('SDK init error:', message);
+    sdkReady = false;
+  });
+  sdkPlayer.addListener('authentication_error', ({ message }) => {
+    console.warn('SDK auth error:', message);
+    sdkReady = false;
+  });
+  sdkPlayer.addListener('account_error', ({ message }) => {
+    console.warn('SDK account error (Premium required):', message);
+    sdkReady = false;
+  });
+
+  sdkPlayer.connect();
+}
+
+// Global callback for the SDK script
+window.onSpotifyWebPlaybackSDKReady = () => {
+  if (accessToken) initSDKPlayer();
+};
+
+// ── Remote playback controls (fallback when SDK not active) ───────────────────
+async function remoteTogglePlay() {
+  try {
+    const state = await fetch('https://api.spotify.com/v1/me/player', {
+      headers: { Authorization: 'Bearer ' + accessToken },
+    });
+    if (state.status === 204) return;
+    const data = await state.json();
+    const endpoint = data.is_playing ? 'pause' : 'play';
+    await fetch(`https://api.spotify.com/v1/me/player/${endpoint}`, {
+      method: 'PUT',
+      headers: { Authorization: 'Bearer ' + accessToken },
+    });
+  } catch {}
+}
+
+async function remoteNext() {
+  try {
+    await fetch('https://api.spotify.com/v1/me/player/next', {
+      method: 'POST', headers: { Authorization: 'Bearer ' + accessToken },
+    });
+  } catch {}
+}
+
+async function remotePrev() {
+  try {
+    await fetch('https://api.spotify.com/v1/me/player/previous', {
+      method: 'POST', headers: { Authorization: 'Bearer ' + accessToken },
+    });
+  } catch {}
+}
+
+async function remoteSeek(ms) {
+  try {
+    await fetch(`https://api.spotify.com/v1/me/player/seek?position_ms=${Math.round(ms)}`, {
+      method: 'PUT', headers: { Authorization: 'Bearer ' + accessToken },
+    });
+  } catch {}
+}
+
+async function remoteSetVolume(pct) {
+  try {
+    await fetch(`https://api.spotify.com/v1/me/player/volume?volume_percent=${Math.round(pct)}`, {
+      method: 'PUT', headers: { Authorization: 'Bearer ' + accessToken },
+    });
+  } catch {}
 }

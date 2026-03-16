@@ -42,34 +42,19 @@ A phased plan for evolving SpotiMix from a playlist generator into a standalone 
 
 ---
 
-## Phase 5: Embedded Player ← **UP NEXT**
+## Phase 5: Embedded Player ✅ **SHIPPED**
 
-**Goal:** Full in-app audio playback — no need to have Spotify open separately.
-
-**Approach:** Spotify Web Playback SDK + remote control fallback.
-
-- **Embedded player** (primary): Uses the Web Playback SDK to create a Spotify Connect device inside the browser. Audio plays directly in the SpotiMix tab. Requires adding `streaming` to OAuth scopes (one-time re-auth).
-- **Remote control** (fallback): Current behavior — controls an existing Spotify client. Used when the SDK can't initialize (e.g., mobile browsers where the SDK isn't supported).
-
-**Player UI:**
-- Persistent bottom bar: album art, track name/artist, play/pause, prev/next
-- Seekable progress bar with elapsed/remaining time
-- Volume control
-- Track list still highlights current track via polling
-- Smooth transitions between tracks
-
-**Technical notes:**
-- SDK is free, loaded from `sdk.scdn.co/spotify-player.js`
-- ~50 lines to initialize the SDK device
-- SDK provides events: `player_state_changed`, `ready`, `not_ready`
-- Tradeoff: embedded audio stops if the tab is closed; remote control keeps playing independently
-- Mobile browsers have limited SDK support — fallback to remote control is essential
-
-**Cost:** $0 (SDK is free with Premium)
+- Spotify Web Playback SDK creates a Connect device in the browser
+- Audio streams directly in-tab (no external Spotify app needed on desktop)
+- Player bar: album art, track/artist, prev/play-pause/next, seekable progress, volume
+- SDK `player_state_changed` events replace polling (real-time updates)
+- Automatic remote-control fallback for mobile/unsupported browsers
+- Progress bar animated smoothly via `requestAnimationFrame`
+- `streaming` scope added to OAuth
 
 ---
 
-## Phase 6: Cloud-Synced Combos (Supabase)
+## Phase 6: Cloud-Synced Combos (Supabase) ← **UP NEXT**
 
 **Goal:** Saved artist combos persist across devices and sessions, tied to the user's Spotify account.
 

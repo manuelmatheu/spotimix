@@ -6,6 +6,7 @@ const SCOPES = [
   'user-read-private','user-read-email',
   'user-modify-playback-state','user-read-playback-state','user-read-currently-playing',
   'playlist-modify-public','playlist-modify-private',
+  'streaming',
 ].join(' ');
 
 // ── State ─────────────────────────────────────────────────────────────────────
@@ -23,3 +24,10 @@ const artists       = [null, null, null];
 const searchTimers  = {};
 let savedCombos     = [];  // [{artists: [{name, image, sub},...]}]
 let tracksPerTag    = 5;   // Tag Mix: tracks fetched per tag
+
+// ── SDK Player State ──────────────────────────────────────────────────────────
+let sdkPlayer    = null;
+let sdkDeviceId  = null;
+let sdkReady     = false;
+let progressRAF  = null;   // requestAnimationFrame id for progress bar
+let lastSDKState = null;   // last player_state_changed state

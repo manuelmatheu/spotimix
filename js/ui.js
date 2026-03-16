@@ -1163,6 +1163,8 @@ async function init() {
       document.getElementById('auth-section').classList.add('hidden');
       document.getElementById('app-section').classList.add('visible');
       renderAllSlots();
+      // Initialize SDK if loaded
+      if (window.Spotify && !sdkPlayer) initSDKPlayer();
     } catch {
       // Token expired — try refreshing
       const refreshed = await refreshAccessToken();
@@ -1174,6 +1176,7 @@ async function init() {
           document.getElementById('auth-section').classList.add('hidden');
           document.getElementById('app-section').classList.add('visible');
           renderAllSlots();
+          if (window.Spotify && !sdkPlayer) initSDKPlayer();
         } catch {
           localStorage.removeItem('spotify_token');
           localStorage.removeItem('spotify_refresh');

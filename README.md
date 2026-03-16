@@ -103,6 +103,13 @@ Push to a GitHub repo with Pages enabled (Settings → Pages → Deploy from `ma
 
 ## Changelog
 
+### v1.5
+- Embedded player: Spotify Web Playback SDK streams audio directly in-browser
+- Persistent player bar: album art, track info, prev/play/next, seekable progress, volume
+- Real-time track updates via SDK events (replaces 5s polling when active)
+- Automatic remote-control fallback when SDK unavailable (mobile, ad blockers)
+- `streaming` scope added (one-time re-auth required)
+
 ### v1.4
 - Tag Mix: new parallel mix creation flow — pick genres or moods, generate directly from tags
 - Tracks sourced from Last.fm `tag.getTopTracks`, matched on Spotify
