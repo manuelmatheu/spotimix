@@ -97,6 +97,21 @@ async function getTopArtistsForTag(tag, limit = 10) {
   } catch { return []; }
 }
 
+async function getTopTracksForTag(tag, limit = 20) {
+  try {
+    const data = await lfm({ method: 'tag.getTopTracks', tag, limit });
+    const tracks = data.tracks?.track || [];
+    return (Array.isArray(tracks) ? tracks : [tracks])
+      .filter(t => t?.name && t?.artist?.name)
+      .map(t => ({
+        name:   t.name,
+        artist: { name: t.artist.name },
+        playcount: t.playcount || '0',
+        _type:  'tag',
+      }));
+  } catch { return []; }
+}
+
 // ── Artist tags (for context narrative) ────────────────────────────────────────
 async function getArtistTags(artistName) {
   try {

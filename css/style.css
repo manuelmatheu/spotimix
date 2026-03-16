@@ -162,6 +162,16 @@
       background: var(--rust); color: var(--bg); border-color: var(--rust);
     }
 
+    /* Tag Mix controls */
+    .tag-mix-controls {
+      margin-top: 16px; padding: 16px 18px;
+      background: var(--tape-bg); border-radius: var(--r);
+      border: 1px solid var(--border-s);
+      animation: fadeIn 200ms ease both;
+    }
+    .tag-mix-options { margin-bottom: 14px; }
+    .tag-mix-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
     /* Artist slots */
     .artists-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-bottom: 28px; }
     @media (max-width: 580px) {
@@ -209,6 +219,9 @@
       .mood-card { padding: 6px 10px; }
       .mood-emoji { font-size: 14px; }
       .mood-name { font-size: 10px; }
+      .tag-mix-controls { padding: 12px; }
+      .tag-mix-actions { flex-direction: column; }
+      .tag-mix-actions .btn { width: 100%; justify-content: center; }
 
       .context-text { font-size: 13px; }
 

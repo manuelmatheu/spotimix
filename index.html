@@ -74,6 +74,22 @@
       <div class="genre-grid" id="genre-grid">
         <div class="context-loading" id="genre-loading">Loading genres…</div>
       </div>
+      <div class="tag-mix-controls" id="tag-mix-controls" style="display:none;">
+        <div class="tag-mix-options">
+          <div class="option-group">
+            <span class="option-group-label">Tracks per tag</span>
+            <div class="num-input">
+              <button class="num-btn" onclick="adjustTagTracks(-1)">−</button>
+              <span class="num-value" id="tag-track-count">5</span>
+              <button class="num-btn" onclick="adjustTagTracks(1)">+</button>
+            </div>
+          </div>
+        </div>
+        <div class="tag-mix-actions">
+          <button class="btn btn-primary" onclick="generateTagMix()">Generate Tag Mix</button>
+          <button class="btn btn-secondary" onclick="applyGenres()">Find artists instead</button>
+        </div>
+      </div>
     </div>
 
     <p class="section-label">Options</p>

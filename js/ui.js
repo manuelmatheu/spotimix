@@ -368,15 +368,156 @@ async function applyMood(idx) {
   const mood = MOOD_PRESETS[idx];
   if (!mood) return;
 
-  // Set the track mode
-  setModeByName(mood.mode);
-
-  // Pre-select the mood's tags and trigger applyGenres
+  // Pre-select the mood's tags
   selectedGenres.clear();
   mood.tags.forEach(t => selectedGenres.add(t));
 
-  showToast(`${mood.emoji} ${mood.name} — finding artists…`);
-  await applyGenres();
+  showToast(`${mood.emoji} ${mood.name} — building your mix…`);
+  await generateTagMix();
+}
+
+// ── Tag Mix Generation ────────────────────────────────────────────────────────
+async function generateTagMix() {
+  const tags = [...selectedGenres];
+  if (!tags.length) { showError('Select at least one genre tag.'); return; }
+
+  clearError();
+  document.getElementById('status-area').classList.add('visible');
+  document.getElementById('results-section').classList.remove('visible');
+  document.getElementById('mix-context').style.display = 'none';
+
+  try {
+    // 1. Fetch tracks from Last.fm for each tag
+    const allLfm = [];
+    for (let i = 0; i < tags.length; i++) {
+      setProgress(Math.round((i / tags.length) * 30), `Fetching tracks for "${tags[i]}"…`);
+      const tagTracks = await getTopTracksForTag(tags[i], tracksPerTag);
+      allLfm.push(...tagTracks);
+    }
+
+    if (!allLfm.length) throw new Error('No tracks found for selected tags');
+
+    // Deduplicate by artist+track name
+    const seen = new Set();
+    const dedupLfm = allLfm.filter(t => {
+      const key = norm(t.artist.name) + '||' + norm(t.name);
+      if (seen.has(key)) return false;
+      seen.add(key); return true;
+    });
+
+    setProgress(35, `Matching ${dedupLfm.length} tracks on Spotify…`);
+
+    // 2. Match on Spotify (reuse existing matchToSpotify)
+    const CONC = 3;
+    const matched = [];
+    for (let i = 0; i < dedupLfm.length; i += CONC) {
+      const chunk   = dedupLfm.slice(i, i + CONC);
+      const results = await Promise.all(chunk.map(matchToSpotify));
+      matched.push(...results);
+      setProgress(35 + Math.round(((i + chunk.length) / dedupLfm.length) * 55),
+        `Matched ${Math.min(i + CONC, dedupLfm.length)} / ${dedupLfm.length}…`);
+    }
+
+    const found   = matched.filter(Boolean);
+    const missing = matched.length - found.length;
+
+    // Deduplicate by Spotify URI
+    const seenUri = new Set();
+    const dedup = found.filter(t => { if (seenUri.has(t.uri)) return false; seenUri.add(t.uri); return true; });
+
+    if (!dedup.length) throw new Error('No tracks matched on Spotify');
+
+    // 3. Interleave shuffle
+    generatedTracks = interleaveShuffle(dedup);
+
+    // Capture context data
+    const ctxTags   = [...tags];
+    const ctxTracks = [...generatedTracks];
+
+    setProgress(100, 'Done!');
+    setTimeout(() => {
+      document.getElementById('status-area').classList.remove('visible');
+      renderResults(missing);
+      autoPlay();
+      generateTagContext(ctxTags, ctxTracks);
+    }, 400);
+
+  } catch (e) {
+    document.getElementById('status-area').classList.remove('visible');
+    showError('Something went wrong: ' + e.message);
+  }
+}
+
+async function generateTagContext(tags, tracks) {
+  const panel  = document.getElementById('mix-context');
+  const textEl = document.getElementById('context-text');
+  const tagsEl = document.getElementById('context-tags');
+
+  panel.style.display = '';
+  panel.classList.remove('collapsed');
+
+  // Show the tags as clickable chips
+  tagsEl.innerHTML = tags.map(t => `<span class="context-tag clickable" onclick="browseFromTag('${esc(t)}')">${esc(t)}</span>`).join('');
+
+  // Build a tag-specific narrative
+  textEl.innerHTML = buildTagNarrative(tags, tracks);
+}
+
+function buildTagNarrative(tags, tracks) {
+  const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+  const em = t => `<em>${t}</em>`;
+  const count = tracks.length;
+  const totalMs = tracks.reduce((s, t) => s + (t.duration || 0), 0);
+  const totalMin = Math.round(totalMs / 60000);
+
+  // Unique artists in the mix
+  const artistSet = new Set(tracks.map(t => t.artist));
+  const artistCount = artistSet.size;
+  const artistSample = [...artistSet].slice(0, 4);
+
+  // Opening — how the tags set the scene
+  const openings = tags.length === 1 ? [
+    () => `A deep pull from the ${em(tags[0])} catalog.`,
+    () => `${em(tags[0])} — the tracks that define the sound.`,
+    () => `Everything ${em(tags[0])}, distilled into one session.`,
+    () => `The heart of ${em(tags[0])}, track by track.`,
+    () => `Built from the most-played corners of ${em(tags[0])}.`,
+  ] : tags.length === 2 ? [
+    () => `${em(tags[0])} meets ${em(tags[1])} — two frequencies, one playlist.`,
+    () => `Where ${em(tags[0])} bleeds into ${em(tags[1])}.`,
+    () => `A collision of ${em(tags[0])} and ${em(tags[1])}.`,
+    () => `Two worlds: ${em(tags[0])} and ${em(tags[1])}. Let them talk.`,
+    () => `The overlap between ${em(tags[0])} and ${em(tags[1])} is wider than you'd think.`,
+  ] : [
+    () => `${tags.map(em).join(', ')} — blended into something that shouldn't work but does.`,
+    () => `Three threads: ${tags.map(em).join(', ')}. Woven together here.`,
+    () => `A mix that reaches across ${tags.map(em).join(', ')}.`,
+    () => `${tags.map(em).join(' + ')}. See what falls out.`,
+  ];
+
+  // Middle — what's in the mix
+  const middles = [
+    () => `${artistCount} different artists make an appearance, from ${artistSample.slice(0, 2).join(' to ')}.`,
+    () => `Tracks from ${artistSample.slice(0, 3).join(', ')}${artistCount > 3 ? ' and ' + (artistCount - 3) + ' more' : ''}.`,
+    () => `You'll hear ${artistSample[0]} alongside ${artistSample[1] || 'others'}${artistCount > 4 ? ' — and plenty more' : ''}.`,
+    () => `${artistCount} artists, no two in a row.`,
+  ];
+
+  // Closings
+  const closings = [
+    () => `${count} tracks${totalMin > 10 ? ', about ' + totalMin + ' minutes' : ''}. Hit play.`,
+    () => `${count} tracks to get lost in.`,
+    () => `That's ${count} songs. Lean back.`,
+    () => totalMin > 30 ? `${count} tracks — a proper session.` : `${count} tracks — just right.`,
+    () => ``,
+  ];
+
+  let parts = [pick(openings)()];
+  if (Math.random() < 0.65) parts.push(pick(middles)());
+  const c = pick(closings)();
+  if (c) parts.push(c);
+
+  return parts.join(' ');
 }
 
 async function loadGenres() {
@@ -397,8 +538,8 @@ function renderGenreGrid(tags) {
   const grid = document.getElementById('genre-grid');
   grid.innerHTML = tags.map((t, i) =>
     `<button class="genre-chip${selectedGenres.has(t) ? ' selected' : ''}" onclick="toggleGenre(this,'${esc(t)}')" style="animation-delay:${Math.min(i * 20, 400)}ms">${esc(t)}</button>`
-  ).join('') + '<div class="genre-go-wrap" id="genre-go-wrap" style="display:none;"><button class="btn btn-primary" onclick="applyGenres()">Find artists</button></div>';
-  updateGenreGoBtn();
+  ).join('');
+  updateTagMixControls();
 }
 
 function toggleGenre(chip, tag) {
@@ -413,12 +554,17 @@ function toggleGenre(chip, tag) {
     selectedGenres.add(tag);
     chip.classList.add('selected');
   }
-  updateGenreGoBtn();
+  updateTagMixControls();
 }
 
-function updateGenreGoBtn() {
-  const wrap = document.getElementById('genre-go-wrap');
+function updateTagMixControls() {
+  const wrap = document.getElementById('tag-mix-controls');
   if (wrap) wrap.style.display = selectedGenres.size > 0 ? '' : 'none';
+}
+
+function adjustTagTracks(d) {
+  tracksPerTag = Math.max(1, Math.min(10, tracksPerTag + d));
+  document.getElementById('tag-track-count').textContent = tracksPerTag;
 }
 
 async function applyGenres() {
