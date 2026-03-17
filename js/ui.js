@@ -471,6 +471,11 @@ async function generateTagContext(tags, tracks) {
   textEl.innerHTML = buildTagNarrative(tags, tracks);
 }
 
+// Capitalize first visible letter, even if preceded by an HTML tag like <em>
+function senCase(html) {
+  return html.replace(/^(\s*(?:<[^>]+>\s*)*)([a-z])/, (_, pre, ch) => pre + ch.toUpperCase());
+}
+
 function buildTagNarrative(tags, tracks) {
   const pick = arr => arr[Math.floor(Math.random() * arr.length)];
   const em = t => `<em>${t}</em>`;
@@ -525,7 +530,7 @@ function buildTagNarrative(tags, tracks) {
   const c = pick(closings)();
   if (c) parts.push(c);
 
-  return parts.join(' ');
+  return senCase(parts.join(' '));
 }
 
 async function loadGenres() {
@@ -838,13 +843,23 @@ async function toggleLikeTrack(idx) {
   const isLiked = likedSet.has(id);
 
   try {
-    const r = await fetch(`https://api.spotify.com/v1/me/tracks?ids=${id}`, {
+    let r = await fetch(`https://api.spotify.com/v1/me/tracks?ids=${id}`, {
       method: isLiked ? 'DELETE' : 'PUT',
       headers: { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
       body: JSON.stringify({ ids: [id] }),
     });
+    if (r.status === 401) {
+      const refreshed = await refreshAccessToken();
+      if (refreshed) {
+        r = await fetch(`https://api.spotify.com/v1/me/tracks?ids=${id}`, {
+          method: isLiked ? 'DELETE' : 'PUT',
+          headers: { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids: [id] }),
+        });
+      }
+    }
     if (!r.ok) {
-      if (r.status === 401 || r.status === 403) {
+      if (r.status === 403) {
         showError('Permission error — disconnect and reconnect Spotify to enable Liked Songs.');
         return;
       }
@@ -1165,7 +1180,7 @@ function buildNarrative(names, allTags, allBios, similarNames, mode, tracks) {
     if (c) parts.push(c);
   }
 
-  return parts.join(' ');
+  return senCase(parts.join(' '));
 }
 
 // ── Keyboard shortcuts ────────────────────────────────────────────────────────
