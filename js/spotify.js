@@ -146,18 +146,17 @@ async function checkLikedTracks(trackIds) {
     try {
       const data = await spGet('/me/tracks/contains?ids=' + chunk.join(','));
       chunk.forEach((id, j) => { if (data[j]) liked.add(id); });
-    } catch { /* ignore — liked state just won't show */ }
+    } catch (e) { console.warn('checkLikedTracks chunk failed:', e); }
   }
   return liked;
 }
 
 async function toggleLikeTrack(trackId, currentlyLiked) {
-  const uri = 'spotify:track:' + trackId;
   if (currentlyLiked) {
-    await spDelete('/me/library', { uris: [uri] });
+    await spDelete('/me/library', { ids: [trackId] });
     return false;
   } else {
-    await spPut('/me/library', { uris: [uri] });
+    await spPut('/me/library', { ids: [trackId] });
     return true;
   }
 }

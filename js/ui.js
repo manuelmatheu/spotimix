@@ -790,7 +790,7 @@ function renderResults(missingCount) {
       </div>
       ${badge}
       <span class="track-duration">${msToTime(t.duration)}</span>
-      <button class="track-heart" id="heart-${i}" onclick="handleTrackHeart(event,${i})" title="Save to Liked Songs">♡</button>
+      <button class="track-heart" id="heart-${i}" onclick="handleTrackHeart(event,${i})" title="Save to Liked Songs">♥</button>
     </div>`;
   }).join('');
 
@@ -809,15 +809,15 @@ function renderResults(missingCount) {
       if (nowPlayingIndex >= 0 && generatedTracks[nowPlayingIndex] && generatedTracks[nowPlayingIndex].uri) {
         updatePlayerBarHeart(generatedTracks[nowPlayingIndex].uri.split(':').pop());
       }
-    }).catch(() => {});
+    }).catch(e => console.warn('liked-state update failed:', e));
   }
 }
 
-function updateTrackRowHeart(i, liked) {
+function updateTrackRowHeart(i, liked, animate) {
   const btn = document.getElementById('heart-' + i);
   if (!btn) return;
-  btn.textContent = liked ? '♥' : '♡';
   btn.classList.toggle('liked', liked);
+  if (animate) triggerHeartPop(btn);
 }
 
 async function handleTrackHeart(event, i) {
@@ -829,7 +829,7 @@ async function handleTrackHeart(event, i) {
   const wasLiked = likedSet.has(trackId);
   // Optimistic update
   if (wasLiked) likedSet.delete(trackId); else likedSet.add(trackId);
-  updateTrackRowHeart(i, !wasLiked);
+  updateTrackRowHeart(i, !wasLiked, true);
   // Sync player bar if this is the currently playing track
   if (nowPlayingIndex >= 0 && generatedTracks[nowPlayingIndex] && generatedTracks[nowPlayingIndex].uri === t.uri) {
     updatePlayerBarHeart(trackId);
@@ -838,7 +838,7 @@ async function handleTrackHeart(event, i) {
     const newState = await toggleLikeTrack(trackId, wasLiked);
     if (newState !== !wasLiked) {
       if (newState) likedSet.add(trackId); else likedSet.delete(trackId);
-      updateTrackRowHeart(i, newState);
+      updateTrackRowHeart(i, newState, false);
       if (nowPlayingIndex >= 0 && generatedTracks[nowPlayingIndex] && generatedTracks[nowPlayingIndex].uri === t.uri) {
         updatePlayerBarHeart(trackId);
       }
@@ -846,7 +846,7 @@ async function handleTrackHeart(event, i) {
   } catch {
     // Revert on error
     if (wasLiked) likedSet.add(trackId); else likedSet.delete(trackId);
-    updateTrackRowHeart(i, wasLiked);
+    updateTrackRowHeart(i, wasLiked, false);
     if (nowPlayingIndex >= 0 && generatedTracks[nowPlayingIndex] && generatedTracks[nowPlayingIndex].uri === t.uri) {
       updatePlayerBarHeart(trackId);
     }
