@@ -790,7 +790,7 @@ function renderResults(missingCount) {
       </div>
       ${badge}
       <span class="track-duration">${msToTime(t.duration)}</span>
-      <button class="track-heart" id="heart-${i}" onclick="handleTrackHeart(event,${i})" title="Save to Liked Songs">♥</button>
+      <button class="track-heart" id="heart-${i}" onclick="handleTrackHeart(event,${i})" title="Save to Liked Songs">♡</button>
     </div>`;
   }).join('');
 
@@ -817,6 +817,7 @@ function updateTrackRowHeart(i, liked, animate) {
   const btn = document.getElementById('heart-' + i);
   if (!btn) return;
   btn.classList.toggle('liked', liked);
+  btn.textContent = liked ? '♥' : '♡';
   if (animate) triggerHeartPop(btn);
 }
 
