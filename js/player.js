@@ -82,11 +82,17 @@ function highlightNowPlaying(index) {
   }
 }
 
+function triggerHeartPop(btn) {
+  btn.animate(
+    [{ transform: 'scale(1)' }, { transform: 'scale(1.45)', offset: 0.5 }, { transform: 'scale(1)' }],
+    { duration: 320, easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)' }
+  );
+}
+
 function updatePlayerBarHeart(trackId) {
   const btn = document.getElementById('pb-heart');
   if (!btn) return;
   const liked = !!(trackId && likedSet.has(trackId));
-  btn.textContent = liked ? '♥' : '♡';
   btn.classList.toggle('liked', liked);
   btn.dataset.trackId = trackId || '';
 }
@@ -263,25 +269,22 @@ async function playerLike() {
   const wasLiked = likedSet.has(trackId);
   // Optimistic update
   if (wasLiked) likedSet.delete(trackId); else likedSet.add(trackId);
-  btn.textContent = wasLiked ? '♡' : '♥';
   btn.classList.toggle('liked', !wasLiked);
-  // Sync matching track row
-  if (nowPlayingIndex >= 0) updateTrackRowHeart(nowPlayingIndex, !wasLiked);
+  triggerHeartPop(btn);
+  if (nowPlayingIndex >= 0) updateTrackRowHeart(nowPlayingIndex, !wasLiked, true);
   try {
     const newState = await toggleLikeTrack(trackId, wasLiked);
     // Confirm server state
     if (newState !== !wasLiked) {
       if (newState) likedSet.add(trackId); else likedSet.delete(trackId);
-      btn.textContent = newState ? '♥' : '♡';
       btn.classList.toggle('liked', newState);
-      if (nowPlayingIndex >= 0) updateTrackRowHeart(nowPlayingIndex, newState);
+      if (nowPlayingIndex >= 0) updateTrackRowHeart(nowPlayingIndex, newState, false);
     }
   } catch {
     // Revert on error
     if (wasLiked) likedSet.add(trackId); else likedSet.delete(trackId);
-    btn.textContent = wasLiked ? '♥' : '♡';
     btn.classList.toggle('liked', wasLiked);
-    if (nowPlayingIndex >= 0) updateTrackRowHeart(nowPlayingIndex, wasLiked);
+    if (nowPlayingIndex >= 0) updateTrackRowHeart(nowPlayingIndex, wasLiked, false);
   }
 }
 
