@@ -275,7 +275,7 @@ async function savePlaylist() {
       const batch = uris.slice(i, i + 100);
       // PUT replaces tracks (equivalent to POST for empty playlist); try PUT first
       const method = i === 0 ? 'PUT' : 'POST';
-      let addRes = await fetch(`https://api.spotify.com/v1/playlists/${pl.id}/tracks`, {
+      let addRes = await fetch(`https://api.spotify.com/v1/playlists/${pl.id}/items`, {
         method,
         headers: { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
         body: JSON.stringify({ uris: batch }),
@@ -283,7 +283,7 @@ async function savePlaylist() {
       if (addRes.status === 401) {
         const refreshed = await refreshAccessToken();
         if (refreshed) {
-          addRes = await fetch(`https://api.spotify.com/v1/playlists/${pl.id}/tracks`, {
+          addRes = await fetch(`https://api.spotify.com/v1/playlists/${pl.id}/items`, {
             method,
             headers: { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
             body: JSON.stringify({ uris: batch }),
