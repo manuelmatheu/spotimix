@@ -62,6 +62,9 @@ function loadCombos() {
 
 function persistCombos() {
   try { localStorage.setItem('mixtape_combos', JSON.stringify(savedCombos)); } catch {}
+  if (!syncInProgress && userId && cloudSyncReady) {
+    upsertCloudCombos(userId, savedCombos).catch(() => {});
+  }
 }
 
 function comboKey(combo) {
@@ -1227,6 +1230,7 @@ async function init() {
       document.getElementById('auth-section').classList.add('hidden');
       document.getElementById('app-section').classList.add('visible');
       renderAllSlots();
+      mergeAndSync(userId, savedCombos);
       // Initialize SDK if loaded
       if (window.Spotify && !sdkPlayer) initSDKPlayer();
     } catch {
@@ -1240,6 +1244,7 @@ async function init() {
           document.getElementById('auth-section').classList.add('hidden');
           document.getElementById('app-section').classList.add('visible');
           renderAllSlots();
+          mergeAndSync(userId, savedCombos);
           if (window.Spotify && !sdkPlayer) initSDKPlayer();
         } catch {
           localStorage.removeItem('spotify_token');
