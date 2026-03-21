@@ -64,6 +64,8 @@ function persistCombos() {
   try { localStorage.setItem('mixtape_combos', JSON.stringify(savedCombos)); } catch {}
   if (!syncInProgress && userId && cloudSyncReady) {
     upsertCloudCombos(userId, savedCombos).catch(() => {});
+  } else if (syncInProgress && userId && cloudSyncReady) {
+    pendingSync = true;
   }
 }
 

@@ -27,6 +27,7 @@ const searchTimers  = {};
 let savedCombos     = [];  // [{artists: [{name, image, sub},...]}]
 let cloudSyncReady  = false;
 let syncInProgress  = false;
+let pendingSync     = false;
 let tracksPerTag    = 5;   // Tag Mix: tracks fetched per tag
 let currentMixLabel = '';  // Used for auto-naming saved playlists
 

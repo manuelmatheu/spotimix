@@ -52,7 +52,11 @@ async function mergeAndSync(spotifyId, localCombos) {
   if (!cloudSyncReady || !spotifyId) return;
   syncInProgress = true;
   try {
-    const cloudCombos = await fetchCloudCombos(spotifyId);
+    const raw = await fetchCloudCombos(spotifyId);
+    // Filter out malformed entries before merging
+    const cloudCombos = raw.filter(c =>
+      c && Array.isArray(c.artists) && c.artists.every(a => a && typeof a.name === 'string')
+    );
 
     // Build set of existing keys from local combos
     const seen = new Set(localCombos.map(c => comboKey(c)));
@@ -78,5 +82,10 @@ async function mergeAndSync(spotifyId, localCombos) {
     console.warn('mergeAndSync failed:', e);
   } finally {
     syncInProgress = false;
+    // If a save happened during merge, push the latest state now
+    if (pendingSync) {
+      pendingSync = false;
+      upsertCloudCombos(spotifyId, savedCombos).catch(() => {});
+    }
   }
 }
