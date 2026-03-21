@@ -154,11 +154,12 @@ async function checkLikedTracks(trackIds) {
 }
 
 async function toggleLikeTrack(trackId, currentlyLiked) {
+  const uri = 'spotify:track:' + trackId;
   if (currentlyLiked) {
-    await spDelete('/me/tracks', { ids: [trackId] });
+    await spDelete('/me/library', { uris: [uri] });
     return false;
   } else {
-    await spPut('/me/tracks', { ids: [trackId] });
+    await spPut('/me/library', { uris: [uri] });
     return true;
   }
 }
