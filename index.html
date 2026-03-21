@@ -204,7 +204,7 @@
   </span>
   <span>
     Built with ❤ by Manuel Matheu with <a href="https://claude.ai" target="_blank" style="color:inherit;text-decoration:underline;">Claude</a> by Anthropic
-    &middot; <a href="#changelog" onclick="document.getElementById('changelog-modal').classList.add('open');return false;" style="color:inherit;text-decoration:underline;">v1.5</a>
+    &middot; <a href="#changelog" onclick="document.getElementById('changelog-modal').classList.add('open');return false;" style="color:inherit;text-decoration:underline;">v1.7</a>
   </span>
 </footer>
 
@@ -217,7 +217,20 @@
     </div>
     <div style="font-family:var(--font-m);font-size:11px;line-height:1.8;opacity:0.75;overflow-y:auto;flex:1;">
       <div style="margin-bottom:16px;">
-        <div style="font-weight:500;color:var(--rust);margin-bottom:4px;">v1.5 &mdash; Current</div>
+        <div style="font-weight:500;color:var(--rust);margin-bottom:4px;">v1.7 &mdash; Current</div>
+        <div>&middot; Cloud-Synced Combos: saved artist combos persist across devices via Supabase</div>
+        <div>&middot; Automatic merge + dedup on login (local + cloud)</div>
+        <div>&middot; Offline-resilient: works from localStorage when Supabase is unreachable</div>
+        <div>&middot; First-time migration: existing combos auto-pushed to cloud</div>
+      </div>
+      <div style="margin-bottom:16px;">
+        <div style="font-weight:500;color:var(--fg);opacity:0.5;margin-bottom:4px;">v1.6</div>
+        <div>&middot; Liked Songs: heart/like button on player bar + track rows</div>
+        <div>&middot; One-click Save to Spotify: auto-named playlists, opens in Spotify after save</div>
+        <div>&middot; Token expiry fix: proactive refresh prevents playback loss</div>
+      </div>
+      <div style="margin-bottom:16px;">
+        <div style="font-weight:500;color:var(--fg);opacity:0.5;margin-bottom:4px;">v1.5</div>
         <div>&middot; Embedded player: Spotify Web Playback SDK streams audio directly in-browser</div>
         <div>&middot; Persistent player bar with album art, controls, seekable progress bar, volume</div>
         <div>&middot; Real-time track updates via SDK events (no more 5s polling delay)</div>

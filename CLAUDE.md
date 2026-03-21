@@ -26,6 +26,7 @@ SpotiMix/
     ├── config.js     — API keys, OAuth scopes, all global state variables
     ├── spotify.js    — PKCE OAuth, token refresh, Spotify API helpers, SDK init, remote controls
     ├── lastfm.js     — All Last.fm API calls: tracks, tags, similar artists, bios, matching
+    ├── supabase.js   — Supabase client init, cloud combo sync (fetch, upsert, merge)
     ├── player.js     — SDK event handling, polling fallback, player bar UI, playback controls, liked songs
     └── ui.js         — The big one: search, slots, combos, genres, moods, suggest, generate, results, narrative
 ```
@@ -34,9 +35,11 @@ SpotiMix/
 
 ```html
 <script src="https://sdk.scdn.co/spotify-player.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="js/config.js"></script>     <!-- globals first -->
 <script src="js/spotify.js"></script>    <!-- auth + API helpers -->
 <script src="js/lastfm.js"></script>    <!-- Last.fm API -->
+<script src="js/supabase.js"></script>  <!-- cloud sync -->
 <script src="js/player.js"></script>    <!-- playback + player bar -->
 <script src="js/ui.js"></script>        <!-- everything else + init() -->
 ```
@@ -218,7 +221,7 @@ streaming, user-library-modify, user-library-read
 
 ---
 
-## Current version: v1.6
+## Current version: v1.7
 
 ### What's shipped
 1. ✅ Genre Tag Browser — browse genres, multi-select, Spotify artist lookup
@@ -227,9 +230,10 @@ streaming, user-library-modify, user-library-read
 4. ✅ Tag Mix — parallel genre-based mix flow, direct from tags
 5. ✅ Embedded Player — Spotify Web Playback SDK with remote fallback
 6. ✅ Liked Songs — heart/like on player bar + track rows
+7. ✅ Cloud-Synced Combos — Supabase sync, merge+dedup, offline-resilient
 
 ### What's next (see ROADMAP.md)
-- **Phase 6:** Cloud-Synced Combos via Supabase (Spotify user_id as key, localStorage + Supabase sync)
+- **Phase 7:** UX improvements (heart animation, loading skeletons, tab title, Tag Mix reshuffle)
 
 ### Known issues / areas for improvement
 - SDK playback: some tracks may skip or mute if token refresh timing is off — monitor `authentication_error` events
@@ -267,19 +271,19 @@ streaming, user-library-modify, user-library-read
 
 ## Claude Code session plan
 
-### Session 1: Bug fixes & polish (quick wins)
-- Fix SDK playback skipping/muting (monitor `authentication_error`, test token refresh cycle)
-- Verify heart/like works after re-auth with new scopes
-- Test mobile responsive layout end-to-end (post-login viewport, player bar wrapping)
+### Session 1: Bug fixes & polish ✅
+- Fixed SDK token expiry playback loss (proactive refresh, retransfer)
+- Fixed like button endpoints (Feb 2026 Spotify API: `/me/library` with URIs)
+- Restored retro heart styling on player bar + track rows
+- One-click Save to Spotify (auto-named playlists)
 
-### Session 2: Phase 6 — Cloud-Synced Combos (Supabase)
-- Prerequisite: create a Supabase project + `user_combos` table
-- Load `@supabase/supabase-js` from CDN
-- Add `supabase.js` file: init client, `fetchCombos()`, `syncCombos()`, `upsertCombos()`
-- Modify `loadCombos()` in ui.js: fetch from Supabase after Spotify login, merge with localStorage
-- Modify `persistCombos()`: write to both localStorage (instant) and Supabase (async)
-- Handle offline gracefully (localStorage-only mode)
-- Test: save combo on desktop → see it on mobile
+### Session 2: Phase 6 — Cloud-Synced Combos ✅
+- Supabase project + `user_combos` table created
+- `supabase.js`: client init, `fetchCloudCombos()`, `upsertCloudCombos()`, `mergeAndSync()`
+- `persistCombos()` fires cloud upsert with `syncInProgress` + `pendingSync` guards
+- `mergeAndSync` called in both init branches (direct auth + token refresh)
+- Offline-resilient: silent failures, localStorage-only fallback
+- Malformed cloud data filtering for robustness
 
 ### Session 3: UX improvements
 - Liked songs heart animation (brief scale pulse on toggle)
