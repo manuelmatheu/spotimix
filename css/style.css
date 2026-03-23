@@ -98,7 +98,8 @@
     #app-section { display: none; }
     #app-section.visible { display: block; }
 
-    .user-bar { position: absolute; bottom: 0; right: 0; display: flex; align-items: center; gap: 10px; }
+    .user-bar { position: absolute; bottom: 0; right: 0; display: none; align-items: center; gap: 10px; }
+    .user-bar.visible { display: flex; }
     .user-bar-left { display: flex; align-items: center; gap: 8px; font-family: var(--font-m); font-size: 11px; opacity: 0.55; }
     .user-dot { width: 7px; height: 7px; border-radius: 50%; background: #1DB954; box-shadow: 0 0 0 2px rgba(29,185,84,0.25); }
 

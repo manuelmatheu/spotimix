@@ -1242,6 +1242,7 @@ async function init() {
       document.getElementById('username-label').textContent = me.display_name || me.id;
       document.getElementById('auth-section').classList.add('hidden');
       document.getElementById('app-section').classList.add('visible');
+      document.querySelector('.user-bar').classList.add('visible');
       renderAllSlots();
       mergeAndSync(userId, savedCombos);
       // Initialize SDK if loaded
@@ -1256,6 +1257,7 @@ async function init() {
           document.getElementById('username-label').textContent = me.display_name || me.id;
           document.getElementById('auth-section').classList.add('hidden');
           document.getElementById('app-section').classList.add('visible');
+          document.querySelector('.user-bar').classList.add('visible');
           renderAllSlots();
           mergeAndSync(userId, savedCombos);
           if (window.Spotify && !sdkPlayer) initSDKPlayer();

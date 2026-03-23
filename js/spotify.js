@@ -68,6 +68,7 @@ function logout() {
   accessToken = null; userId = null;
   document.getElementById('auth-section').classList.remove('hidden');
   document.getElementById('app-section').classList.remove('visible');
+  document.querySelector('.user-bar').classList.remove('visible');
 }
 
 // ── Spotify API ───────────────────────────────────────────────────────────────
