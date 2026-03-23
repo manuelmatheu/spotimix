@@ -769,10 +769,6 @@ function reshuffle() {
 // ── Results ───────────────────────────────────────────────────────────────────
 function renderResults(missingCount) {
   const list = document.getElementById('track-list');
-  document.getElementById('results-count').textContent = `${generatedTracks.length} tracks`;
-  const warn = document.getElementById('match-warning');
-  warn.textContent = missingCount > 0
-    ? `${missingCount} track${missingCount > 1 ? 's' : ''} not found on Spotify` : '';
 
   list.className = 'track-list';
   list.innerHTML = generatedTracks.map((t, i) => {
