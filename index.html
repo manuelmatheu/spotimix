@@ -16,7 +16,7 @@
 
   <header>
     <span class="logo-eyebrow">/ A–Side</span>
-    <h1 class="logo">Spoti<em>Mix</em></h1>
+    <h1 class="logo" onclick="exitHeroMode()" style="cursor:pointer;">Spoti<em>Mix</em></h1>
     <p class="tagline">The radio only you could build.</p>
     <button class="theme-toggle" onclick="toggleTheme()" title="Toggle dark/light mode" aria-label="Toggle theme">
       <span class="theme-icon">☽</span>
@@ -141,13 +141,14 @@
       <hr class="divider" />
       <div class="results-header">
         <h2 class="results-title">Your SpotiMix</h2>
+        <button class="btn btn-ghost btn-new-mix" onclick="exitHeroMode()">← New Mix</button>
         <div class="results-meta">
           <span class="results-count" id="results-count"></span>
           <span class="match-warning" id="match-warning"></span>
         </div>
       </div>
       <div class="results-actions">
-        <button class="btn btn-primary btn-save" onclick="savePlaylist()">Save to Spotify</button>
+        <button class="btn btn-secondary btn-save" onclick="savePlaylist()">Save to Spotify</button>
         <button class="btn btn-secondary" onclick="addToQueue()">Add to Queue</button>
         <button class="btn btn-ghost" onclick="reshuffle()">↺ Reshuffle</button>
       </div>

@@ -301,6 +301,34 @@
     .progress-fill { height: 100%; background: var(--gold); border-radius: 2px; transition: width 300ms ease; width: 0%; }
     .status-msg { font-size: 12px; opacity: 0.55; font-family: var(--font-m); }
 
+    /* Hero mode: collapse input panels when mix is active */
+    .entry-header, #entry-search-panel, #entry-browse-panel, #artist-mix-options {
+      transition: max-height 400ms ease, opacity 250ms ease, margin 400ms ease, padding 400ms ease;
+      max-height: 2000px; opacity: 1; overflow: hidden;
+    }
+    #app-section.mix-active .entry-header,
+    #app-section.mix-active #entry-search-panel,
+    #app-section.mix-active #entry-browse-panel,
+    #app-section.mix-active #artist-mix-options {
+      max-height: 0 !important; opacity: 0; overflow: hidden;
+      margin-top: 0 !important; margin-bottom: 0 !important;
+      padding-top: 0 !important; padding-bottom: 0 !important;
+      border-top: none !important; border-bottom: none !important;
+      pointer-events: none;
+    }
+
+    /* New Mix button — only visible in hero mode */
+    .btn-new-mix { opacity: 0; pointer-events: none; transition: opacity 200ms ease; font-size: 11px; letter-spacing: 0.06em; }
+    #app-section.mix-active .btn-new-mix { opacity: 0.5; pointer-events: auto; }
+    #app-section.mix-active .btn-new-mix:hover { opacity: 0.9; }
+
+    /* Save button promoted to primary in hero mode */
+    #app-section.mix-active .btn-save {
+      background: var(--rust); color: var(--bg); border-color: var(--rust);
+      box-shadow: 3px 3px 0 var(--card-shadow);
+    }
+    #app-section.mix-active .btn-save:hover { background: #b0421a; box-shadow: 4px 4px 0 var(--card-shadow); transform: translate(-1px,-1px); }
+
     /* Results */
     #results-section { display: none; }
     #results-section.visible { display: block; }

@@ -332,7 +332,20 @@ let entryMode = 'search';
 let genresLoaded = false;
 let selectedGenres = new Set();
 
+function enterHeroMode() {
+  document.getElementById('app-section').classList.add('mix-active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function exitHeroMode() {
+  const app = document.getElementById('app-section');
+  if (!app.classList.contains('mix-active')) return;
+  app.classList.remove('mix-active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
 function setEntry(mode) {
+  exitHeroMode();
   entryMode = mode;
   document.getElementById('entry-search').classList.toggle('active', mode === 'search');
   document.getElementById('entry-browse').classList.toggle('active', mode === 'browse');
@@ -793,7 +806,7 @@ function renderResults(missingCount) {
   }).join('');
 
   document.getElementById('results-section').classList.add('visible');
-  document.getElementById('results-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  enterHeroMode();
 
   // Reset save button for the new mix
   const saveBtn = document.querySelector('.btn-save');
