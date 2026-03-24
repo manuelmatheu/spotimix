@@ -14,9 +14,10 @@ async function doSearch(idx, q) {
     const data  = await spGet(`/search?type=artist&q=${encodeURIComponent(q)}&limit=6`);
     const items = data.artists?.items || [];
     renderDropdown(idx, items.map(a => ({
-      name:  a.name,
-      image: a.images?.[1]?.url || a.images?.[0]?.url || '',
-      sub:   a.followers?.total ? fmtNum(a.followers.total) + ' followers' : '',
+      name:      a.name,
+      image:     a.images?.[1]?.url || a.images?.[0]?.url || '',
+      sub:       a.followers?.total ? fmtNum(a.followers.total) + ' followers' : '',
+      spotifyId: a.id,
     })));
   } catch {
     dd.innerHTML = '<div class="autocomplete-loading">Error — try again.</div>';
@@ -260,9 +261,10 @@ async function suggestArtistByName(chip, name) {
 
     if (item) {
       artists[emptyIdx] = {
-        name:  item.name,
-        image: item.images?.[1]?.url || item.images?.[0]?.url || '',
-        sub:   item.followers?.total ? fmtNum(item.followers.total) + ' followers' : '',
+        name:      item.name,
+        image:     item.images?.[1]?.url || item.images?.[0]?.url || '',
+        sub:       item.followers?.total ? fmtNum(item.followers.total) + ' followers' : '',
+        spotifyId: item.id,
       };
       renderSlot(emptyIdx);
       updateComboSaveBtn();
@@ -302,9 +304,10 @@ async function suggestFromTag(chip, tag) {
       const item = data.artists?.items?.[0];
       if (item && norm(item.name) === norm(candidate.name)) {
         match = {
-          name:  item.name,
-          image: item.images?.[1]?.url || item.images?.[0]?.url || '',
-          sub:   item.followers?.total ? fmtNum(item.followers.total) + ' followers' : '',
+          name:      item.name,
+          image:     item.images?.[1]?.url || item.images?.[0]?.url || '',
+          sub:       item.followers?.total ? fmtNum(item.followers.total) + ' followers' : '',
+          spotifyId: item.id,
         };
         break;
       }
@@ -634,9 +637,10 @@ async function applyGenres() {
       const item = data.artists?.items?.[0];
       if (item && norm(item.name) === norm(name)) {
         spotifyMatches.push({
-          name:  item.name,
-          image: item.images?.[1]?.url || item.images?.[0]?.url || '',
-          sub:   item.followers?.total ? fmtNum(item.followers.total) + ' followers' : '',
+          name:      item.name,
+          image:     item.images?.[1]?.url || item.images?.[0]?.url || '',
+          sub:       item.followers?.total ? fmtNum(item.followers.total) + ' followers' : '',
+          spotifyId: item.id,
         });
       }
     } catch { /* skip */ }
@@ -706,53 +710,109 @@ async function generate() {
   rawTracks = {};
 
   try {
-    for (let i = 0; i < active.length; i++) {
-      setProgress(Math.round((i / active.length) * 30), `Fetching Last.fm tracks for ${active[i].name}…`);
-      rawTracks[active[i].name] = await getTracksForArtist(active[i]);
+    let spotifyDirect = []; // tracks already matched (have .uri)
+    let lfmTracks     = []; // tracks needing matchToSpotify
+    let ctxSimilar    = [];
+
+    if (trackMode === 'top') {
+      // Spotify top tracks only — popularity-ranked, no matchToSpotify needed
+      setProgress(10, 'Fetching top tracks from Spotify…');
+      const results = await Promise.all(
+        active.map(a => getSpotifyTopTracks(a.name, a.spotifyId || null))
+      );
+      results.forEach((tracks, i) => {
+        const sliced = tracks.slice(0, tracksPerArtist).map(t => ({ ...t, _artist: active[i].name }));
+        spotifyDirect.push(...sliced);
+      });
+      setProgress(70, 'Building mix…');
+
+    } else if (trackMode === 'deep') {
+      // Last.fm deep cuts only — unchanged behavior
+      for (let i = 0; i < active.length; i++) {
+        setProgress(Math.round((i / active.length) * 40), `Fetching deep cuts for ${active[i].name}…`);
+        rawTracks[active[i].name] = await getTracksForArtist(active[i], 'deep');
+      }
+      lfmTracks = Object.values(rawTracks).flat();
+      setProgress(45, `Matching ${lfmTracks.length} tracks on Spotify…`);
+
+    } else if (trackMode === 'mix') {
+      // Half Spotify top tracks + half Last.fm deep cuts, fetched in parallel
+      setProgress(10, 'Fetching tracks from both sources…');
+      const [spotifyResults, ...lfmResults] = await Promise.all([
+        Promise.all(active.map(a => getSpotifyTopTracks(a.name, a.spotifyId || null))),
+        ...active.map(a => getTracksForArtist(a, 'deep')),
+      ]);
+      spotifyResults.forEach((tracks, i) => {
+        const half = Math.ceil(tracksPerArtist / 2);
+        const sliced = tracks.slice(0, half).map(t => ({ ...t, _artist: active[i].name }));
+        spotifyDirect.push(...sliced);
+      });
+      lfmResults.forEach((tracks, i) => {
+        const half = Math.floor(tracksPerArtist / 2);
+        lfmTracks.push(...tracks.slice(0, half));
+        rawTracks[active[i].name] = tracks.slice(0, half);
+      });
+      setProgress(50, `Matching ${lfmTracks.length} Last.fm tracks on Spotify…`);
+
+    } else if (trackMode === 'discovery') {
+      // Similar artists' Spotify top tracks
+      setProgress(20, 'Finding similar artists…');
+      const activeNames  = active.map(a => a.name);
+      const similarNames = await getSimilarArtists(activeNames, 3 * active.length);
+      ctxSimilar = similarNames;
+
+      setProgress(35, `Fetching Spotify tracks for ${similarNames.length} similar artists…`);
+      const BATCH = 3;
+      for (let i = 0; i < similarNames.length; i += BATCH) {
+        const batch = similarNames.slice(i, i + BATCH);
+        const results = await Promise.all(batch.map(name => getSpotifyTopTracks(name, null)));
+        results.forEach((tracks, j) => {
+          const picked = tracks.slice(0, 2).map(t => ({ ...t, _artist: batch[j], _type: 'discovery' }));
+          spotifyDirect.push(...picked);
+        });
+        setProgress(35 + Math.round(((i + BATCH) / similarNames.length) * 35),
+          `Fetched tracks for ${Math.min(i + BATCH, similarNames.length)} / ${similarNames.length} artists…`);
+      }
+      setProgress(75, 'Building mix…');
     }
 
-    if (trackMode === 'discovery') {
-      setProgress(32, 'Finding similar artists…');
-      const activeNames     = active.map(a => a.name);
-      const similarNames    = await getSimilarArtists(activeNames, 3 * active.length);
-      setProgress(40, `Fetching tracks for ${similarNames.length} similar artists…`);
-      const discoveryTracks = await getDiscoveryTracks(similarNames);
-      rawTracks['__discovery__'] = discoveryTracks;
+    // Match Last.fm tracks that still need Spotify URIs
+    let missing = 0;
+    if (lfmTracks.length) {
+      const CONC = 3;
+      const matched = [];
+      for (let i = 0; i < lfmTracks.length; i += CONC) {
+        const chunk   = lfmTracks.slice(i, i + CONC);
+        const results = await Promise.all(chunk.map(matchToSpotify));
+        matched.push(...results);
+        setProgress(50 + Math.round(((i + chunk.length) / lfmTracks.length) * 40),
+          `Matched ${Math.min(i + CONC, lfmTracks.length)} / ${lfmTracks.length}…`);
+      }
+      const found = matched.filter(Boolean);
+      missing = matched.length - found.length;
+      spotifyDirect.push(...found);
     }
 
-    const allLfm = Object.values(rawTracks).flat();
-    setProgress(45, `Matching ${allLfm.length} tracks on Spotify…`);
-
-    const CONC = 3;
-    const matched = [];
-    for (let i = 0; i < allLfm.length; i += CONC) {
-      const chunk   = allLfm.slice(i, i + CONC);
-      const results = await Promise.all(chunk.map(matchToSpotify));
-      matched.push(...results);
-      setProgress(45 + Math.round(((i + chunk.length) / allLfm.length) * 50),
-        `Matched ${Math.min(i + CONC, allLfm.length)} / ${allLfm.length}…`);
-    }
-
-    const found   = matched.filter(Boolean);
-    const missing = matched.length - found.length;
-
+    // Dedup by URI and shuffle
     const seen  = new Set();
-    const dedup = found.filter(t => { if (seen.has(t.uri)) return false; seen.add(t.uri); return true; });
+    const dedup = spotifyDirect.filter(t => {
+      if (!t.uri || seen.has(t.uri)) return false;
+      seen.add(t.uri);
+      return true;
+    });
 
     generatedTracks = interleaveShuffle(dedup);
 
     // Capture context data before rendering
-    const ctxArtists  = [...active];
-    const ctxSimilar  = trackMode === 'discovery' ? (rawTracks['__discovery__'] || []).map(t => t._similarArtist).filter((v,i,a) => a.indexOf(v) === i) : [];
-    const ctxMode     = trackMode;
-    const ctxTracks   = [...generatedTracks];
+    const ctxArtists = [...active];
+    const ctxMode    = trackMode;
+    const ctxTracks  = [...generatedTracks];
 
     setProgress(100, 'Done!');
     setTimeout(() => {
       document.getElementById('status-area').classList.remove('visible');
       renderResults(missing);
       autoPlay();
-      // Fire context generation async — doesn't block playback
       generateContext(ctxArtists, ctxSimilar, ctxMode, ctxTracks);
     }, 400);
 

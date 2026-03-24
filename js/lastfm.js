@@ -48,15 +48,16 @@ async function getDiscoveryTracks(similarArtistNames) {
   return tracks;
 }
 
-async function getTracksForArtist(artist) {
+async function getTracksForArtist(artist, mode) {
+  mode = mode || trackMode;
   const data   = await lfm({ method: 'artist.getTopTracks', artist: artist.name, limit: 50 });
   const raw    = data.toptracks?.track || [];
   const all    = (Array.isArray(raw) ? raw : [raw]).filter(t => t?.name);
 
-  if (trackMode === 'top') {
+  if (mode === 'top') {
     return all.slice(0, tracksPerArtist).map(t => ({ ...t, _type: 'top' }));
   }
-  if (trackMode === 'deep') {
+  if (mode === 'deep') {
     return all.slice(10, 10 + tracksPerArtist).map(t => ({ ...t, _type: 'deep' }));
   }
   // Mix

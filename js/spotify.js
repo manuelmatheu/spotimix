@@ -90,6 +90,33 @@ async function spGet(path) {
   return r.json();
 }
 
+async function resolveSpotifyId(artistName) {
+  try {
+    const data = await spGet(`/search?type=artist&q=${encodeURIComponent(artistName)}&limit=3`);
+    const items = data.artists?.items || [];
+    const item = items.find(a => norm(a.name) === norm(artistName)) || items[0];
+    return item?.id || null;
+  } catch { return null; }
+}
+
+async function getSpotifyTopTracks(artistName, spotifyId) {
+  try {
+    const id = spotifyId || await resolveSpotifyId(artistName);
+    if (!id) return [];
+    const data = await spGet(`/artists/${id}/top-tracks?market=from_token`);
+    const tracks = data.tracks || [];
+    return tracks.map(t => ({
+      uri:        t.uri,
+      name:       t.name,
+      artist:     t.artists[0]?.name || artistName,
+      duration:   t.duration_ms,
+      albumArt:   t.album?.images?.[2]?.url || t.album?.images?.[0]?.url || '',
+      _type:      'top',
+      _playcount: 0,
+    }));
+  } catch { return []; }
+}
+
 async function spPost(path, body) {
   const r = await fetch('https://api.spotify.com/v1' + path, {
     method: 'POST',
