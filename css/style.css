@@ -417,10 +417,12 @@
     .track-duration { font-family: var(--font-m); font-size: 11px; opacity: 0.35; flex-shrink: 0; }
     .track-heart {
       background: none; border: none; cursor: pointer;
-      font-size: 14px; line-height: 1; padding: 4px; flex-shrink: 0;
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 4px; flex-shrink: 0;
       color: var(--fg); opacity: 0.15;
       transition: opacity 120ms, color 120ms, transform 120ms;
     }
+    .track-heart svg { width: 14px; height: 14px; }
     .track-heart:hover { opacity: 0.5; }
     .track-item:hover .track-heart { opacity: 0.35; }
     .track-heart.liked { color: var(--rust); opacity: 0.8; }
@@ -428,10 +430,12 @@
 
     .pb-heart {
       background: none; border: none; cursor: pointer;
-      font-size: 14px; line-height: 1; padding: 6px;
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 6px;
       color: inherit; opacity: 0.7; flex-shrink: 0;
       transition: opacity 100ms, color 120ms, transform 120ms;
     }
+    .pb-heart svg { width: 14px; height: 14px; }
     .pb-heart:hover { opacity: 1; }
     .pb-heart.liked { color: var(--rust); opacity: 1; }
     .pb-heart.liked:hover { transform: scale(1.15); }
