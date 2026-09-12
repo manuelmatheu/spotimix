@@ -5,8 +5,7 @@
 SpotiMix is a single-page web app that generates Spotify playlists by blending tracks from artists, genres, and moods. It uses Last.fm for music discovery (tags, similar artists, track data) and the Spotify Web API + Web Playback SDK for authentication, search, playback, and playlist management. There is no backend — everything runs client-side, deployed as static files on Vercel.
 
 **Live:** https://spotimix-app.vercel.app/
-**Repo:** https://github.com/manuelmatheu/SpotiMix
-**GitHub Pages (legacy):** https://manuelmatheu.github.io/SpotiMix/
+**Repo:** https://github.com/manuelmatheu/spotimix (renamed to lowercase; the old `SpotiMix` URL still redirects)
 
 ---
 
@@ -254,7 +253,7 @@ Because markup is built as template strings with inline `onclick` attributes, va
 
 ### Deployment
 - **Vercel** (production): auto-deploys from `main` branch
-- **GitHub Pages** (legacy): still active at `manuelmatheu.github.io/SpotiMix/`
+- **GitHub Pages** (legacy): gone. Both `manuelmatheu.github.io/SpotiMix/` and the lowercase path return 404 (checked 2026-09-12), so Vercel is the only live deployment
 - `REDIRECT_URI = window.location.origin + window.location.pathname` — adapts to any domain
 - Must add each deployment URL as redirect URI in Spotify Developer Dashboard
 - Hard refresh (Cmd+Shift+R) needed on mobile to see changes after deploy
@@ -262,8 +261,7 @@ Because markup is built as template strings with inline `onclick` attributes, va
 ### Git workflow
 - Single `main` branch, direct pushes
 - Commit as the repo's configured git user (currently `Manuel`) — do not override `user.name` / `user.email`
-- Remote uses PAT in URL: `https://x-access-token:{PAT}@github.com/manuelmatheu/SpotiMix.git`
-- PAT may need updating after expiry
+- Remote is plain HTTPS (`https://github.com/manuelmatheu/spotimix.git`) and auth comes from the local git credential helper — no PAT embedded in the URL any more
 - Always `node --check <file>.js` on every changed JS file before committing
 
 ### CSS conventions
