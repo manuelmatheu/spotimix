@@ -10,6 +10,16 @@ SpotiMix is a single-page web app that generates Spotify playlists by blending t
 
 ---
 
+## Commands
+
+**No build, no bundler, no test suite.** Edit a file, reload the browser.
+
+- **Syntax check — do this before every commit:** `node --check js/ui.js` (run on each changed JS file)
+- **Local dev:** serve statically, e.g. `python -m http.server 8000`, then open `http://localhost:8000`. Opening `index.html` over `file://` breaks PKCE auth, since `REDIRECT_URI = window.location.origin + window.location.pathname`. Any local port must also be registered as a Redirect URI in the Spotify Developer Dashboard.
+- **Deploy:** push to `main` → Vercel auto-deploys. No build step.
+
+---
+
 ## Architecture
 
 ### File structure
@@ -20,6 +30,8 @@ SpotiMix/
 ├── CLAUDE.md         — This file
 ├── README.md         — User-facing docs
 ├── ROADMAP.md        — Feature roadmap with shipped/planned phases
+├── docs/
+│   └── superpowers/  — dated design docs: plans/ and specs/ (cloud-synced-combos, share-mix)
 ├── css/
 │   └── style.css     — All styles: dark/light theme via CSS vars, player bar, responsive
 └── js/
@@ -46,6 +58,17 @@ SpotiMix/
 
 All functions and variables are global. No modules, no build step, no bundler.
 
+`index.html` reaches ~22 distinct global functions through inline `onclick` attributes, so **renaming a global function means grepping `index.html` too**. That coupling is why the all-globals rule can't be relaxed one file at a time.
+
+### View state machine (ui.js:339–384)
+
+One page, three visual states, all driven by CSS classes:
+
+- `setEntry('search' | 'browse')` — switches the entry tabs (`#entry-search` / `#entry-browse`); calls `exitHeroMode()` first
+- `enterHeroMode()` — adds `.mix-active` to `#app-section`, results take over the viewport. Called at the end of both generate flows
+- `exitHeroMode()` — removes `.mix-active`, back to the picker. Wired to the logo and the "← New Mix" button
+- `body.has-player` — added on first playback, reserves bottom padding for the player bar
+
 ### Theme system
 
 CSS variables in `:root` (light) and `[data-theme="dark"]` (dark). Theme toggle stored in `localStorage('mixtape_theme')`. The toggle script runs inline before other JS to prevent flash.
@@ -60,14 +83,29 @@ Key semantic vars: `--bg`, `--fg`, `--surface`, `--border`, `--border-s`, `--tap
 1. User searches Spotify for up to 3 artists → fills `artists[0..2]`
 2. Smart Suggest shows similar artists + genre tags to auto-fill remaining slots
 3. User picks track mode: `top`, `deep`, `mix`, `discovery`
-4. `generate()` → `getTracksForArtist()` per artist → `matchToSpotify()` → `interleaveShuffle()` → `renderResults()` → `autoPlay()`
+4. `generate()` → source per mode (see Track sourcing below) → `matchToSpotify()` for Last.fm-sourced tracks only → `interleaveShuffle()` → `renderResults()` → `enterHeroMode()` → `autoPlay()`
 
 ### Tag Mix (Browse genres tab)
 1. User clicks mood preset or selects 1–3 genre tags
 2. `generateTagMix()` → `getTopTracksForTag()` per tag → `matchToSpotify()` → `interleaveShuffle()` → `renderResults()` → `autoPlay()`
 3. Never touches `artists[]` — completely independent
 
-Both flows share: `matchToSpotify()`, `interleaveShuffle()`, `renderResults()`, `playFromTrack()`, `autoPlay()`, save playlist, add to queue, liked songs.
+Both flows share: `matchToSpotify()`, `interleaveShuffle()`, `renderResults()`, `playFromTrack()`, `autoPlay()`, `reshuffle()`, save playlist, add to queue, liked songs. All of these read `generatedTracks`, so they are flow-agnostic by construction.
+
+### Track sourcing (hybrid — shipped, ROADMAP Phase 9)
+
+`generate()` picks its source per mode. Last.fm stays the *discovery* brain (tags, similar artists, bios); Spotify supplies *current* popularity.
+
+| Mode (`trackMode`) | Source |
+|---|---|
+| `top` | `getSpotifyTopTracks()` only — tracks already carry URIs, so `matchToSpotify()` is skipped |
+| `deep` | Last.fm `getTracksForArtist(a, 'deep')` (ranks 11–50) → `matchToSpotify()` |
+| `mix` | `ceil(n/2)` Spotify top + `floor(n/2)` Last.fm deep cuts, fetched in one `Promise.all` |
+| `discovery` | Main artists' Spotify top tracks + 2 each from `getSimilarArtists()`, all via Spotify |
+
+`getSpotifyTopTracks(artistName)` (spotify.js:93) uses `GET /search?type=track&q=artist:{name}&limit=10` and prefers exact artist-name matches. It deliberately does **not** use `GET /artists/{id}/top-tracks` — that endpoint was removed in the February 2026 API update (see commits a57c202, dd8219e). Its output shape matches `matchToSpotify()`, so the two paths merge freely.
+
+Artist objects are `{ name, image, sub, spotifyId }` — `selectArtist()` stores the Spotify artist ID straight from the search result. (The `config.js:29` comment listing only `{name, image, sub}` is stale.)
 
 ---
 
@@ -78,7 +116,7 @@ Both flows share: `matchToSpotify()`, `interleaveShuffle()`, `renderResults()`, 
 - `exchangeCode(code)` → exchanges for access + refresh tokens
 - Tokens stored in `localStorage` (`spotify_token`, `spotify_refresh`)
 - `refreshAccessToken()` → uses refresh token to get new access token silently
-- `spGet(path)` → auto-retries with token refresh on 401
+- `spGet(path)`, `spPut(path, body)`, `spDelete(path, body)` → retry once with a token refresh on 401, then `logout()`. **`spPost()` does not** — see gotchas
 
 ### Scopes
 ```
@@ -103,11 +141,15 @@ streaming, user-library-modify, user-library-read
 - Remote: find active device → transfer if needed → play with `device_id`
 - URIs capped at 100 per play call (Spotify API limit)
 
-### Liked Songs
-- `checkLikedTracks()` — batch-checks via `GET /me/tracks/contains` (50 IDs per call)
-- `toggleLikeTrack(idx)` — `PUT` or `DELETE` on `/me/tracks` with `{ ids: [id] }` body
-- Heart icons on track rows (`heart-{i}`) and player bar (`pb-heart`)
-- `likedSet` (Set of track IDs) tracks liked state client-side
+### Liked Songs — use `/me/library`, NOT `/me/tracks`
+
+`/me/tracks` and `/me/tracks/contains` were **removed** in the February 2026 Spotify API update. The replacement takes track **URIs as query params**, not IDs in a JSON body. Do not reintroduce the old endpoints.
+
+- `checkLikedTracks(trackIds)` (spotify.js:166) — `GET /me/library/contains?uris=…` in **chunks of 40** URI-encoded `spotify:track:{id}` values; returns a `Set` of liked IDs. Failed chunks warn and are skipped
+- `toggleLikeTrack(trackId, currentlyLiked)` (spotify.js:179) — `PUT /me/library?uris={uri}` to like, `DELETE /me/library?uris={uri}` to unlike; returns the new liked state
+- UI handlers live elsewhere: `handleTrackHeart(event, i)` (ui.js:907) for track rows, `playerLike()` (player.js:265) for the player bar. Both flip `likedSet` optimistically and roll back on failure
+- `triggerHeartPop(btn)` (player.js:85) — scale pulse via the Web Animations API (`btn.animate`), no CSS keyframe involved
+- Heart icons on track rows (`heart-{i}`) and player bar (`pb-heart`); `likedSet` (Set of track IDs) holds client-side state
 - `updatePlayerBarHeart()` called on track change via `highlightNowPlaying()`
 
 ---
@@ -163,7 +205,7 @@ streaming, user-library-modify, user-library-read
 - Templates randomized at 3 layers: opening (artist/tag connection), mode color, closing
 
 ### Saved combos
-- `savedCombos` array in `localStorage('mixtape_combos')`
+- `savedCombos` array in `localStorage('mixtape_combos')` — shape `[{ artists: [{ name, image, sub, spotifyId }, …] }]`
 - Compact cards with overlapping avatars below artist grid
 - Deduplicated by artist names (order-independent)
 - `loadCombo(idx)` fills artist slots + triggers suggest update
@@ -178,6 +220,16 @@ streaming, user-library-modify, user-library-read
 - `transferPlayback()` with ~300-800ms delay before retrying play on idle devices
 - Refresh tokens: Spotify may return a new refresh token — always store it
 - SDK `getOAuthToken` is called periodically — must provide current token, not stale one
+- **`spPost()` has no 401-refresh retry** (spotify.js:114) — it throws on a stale token while `spGet`/`spPut`/`spDelete` would have recovered, so `savePlaylist()` and `addToQueue()` can fail right after expiry
+
+### Escaping for inline handlers — two functions, not one
+
+Because markup is built as template strings with inline `onclick` attributes, values cross **two** parsers. Use the right helper or clicks die silently:
+
+- `esc(s)` — HTML-escapes `& < > " '`. For text content and double-quoted attribute values.
+- `escJsAttr(s)` — for a value landing inside a **JS string literal in an attribute**, i.e. `onclick="f('HERE')"`. Escapes for JS first (`\\`, `\'`), then calls `esc()`.
+
+`esc()` alone is **not** enough there: the HTML parser decodes `&#39;` back to a bare `'` *before* the JS is compiled, so `Guns N' Roses` terminates the string and the handler throws a SyntaxError with no visible error. Five call sites depend on `escJsAttr`: `suggestArtistByName`, `suggestFromTag`, `toggleGenre`, and `browseFromTag` (×2). Don't collapse the two helpers.
 
 ### interleaveShuffle()
 - Groups tracks by artist, shuffles within groups
@@ -191,6 +243,8 @@ streaming, user-library-modify, user-library-read
 - `selectedGenres` (Set) — cleared after Tag Mix generation to prevent stale state
 - `sessionQueue` (Set) — URIs sent to Spotify, used by polling to detect drift
 - `sdkReady` / `sdkDeviceId` — SDK availability, checked before every play command
+- `currentMixLabel` — set by both flows (`A × B × C` or `tag, tag`), used to auto-name saved playlists
+- `init()` (ui.js:1294) **duplicates its entire post-login path** across two branches (direct auth, then token-refresh retry). Any new login step must be added in **both** — this already bit `mergeAndSync`
 
 ### GitHub push protection
 - GitHub secret scanning auto-revokes API keys pushed to the repo
@@ -207,10 +261,10 @@ streaming, user-library-modify, user-library-read
 
 ### Git workflow
 - Single `main` branch, direct pushes
-- Git config: `user.email=claude@anthropic.com`, `user.name=Claude`
+- Commit as the repo's configured git user (currently `Manuel`) — do not override `user.name` / `user.email`
 - Remote uses PAT in URL: `https://x-access-token:{PAT}@github.com/manuelmatheu/SpotiMix.git`
 - PAT may need updating after expiry
-- Always `node -c file.js` syntax-check before committing
+- Always `node --check <file>.js` on every changed JS file before committing
 
 ### CSS conventions
 - All colors via CSS variables (never hardcode hex in rules)
@@ -233,9 +287,12 @@ streaming, user-library-modify, user-library-read
 7. ✅ Cloud-Synced Combos — Supabase sync, merge+dedup, offline-resilient
 8. ✅ Hybrid Track Sourcing — Top Hits/Mix/Discovery use Spotify search (current popularity); Deep Cuts unchanged
 
-### What's next (see ROADMAP.md)
-- **Phase 7:** UX improvements (heart animation, loading skeletons, tab title, Tag Mix reshuffle)
-- **Phase 8:** Share Mix via URL
+### What's next
+
+`ROADMAP.md` is the single source of truth for phase status. Current state of the open phases:
+
+- **Phase 7 (UX):** heart animation is **already shipped** (`triggerHeartPop`). Genuinely open: genre-grid loading skeleton, now-playing browser-tab title (nothing writes `document.title` yet), and Tag Mix reshuffle — note `reshuffle()` is already flow-agnostic, so verify before building
+- **Phase 8 (Share Mix via URL):** design already written — see `docs/superpowers/specs/2026-03-21-share-mix-design.md` and the matching plan in `docs/superpowers/plans/`
 
 ### Known issues / areas for improvement
 - SDK playback: some tracks may skip or mute if token refresh timing is off — monitor `authentication_error` events
@@ -254,7 +311,7 @@ streaming, user-library-modify, user-library-read
 | `generateTagMix()` | ui.js | Tag Mix generation |
 | `matchToSpotify(lfmTrack)` | lastfm.js | Last.fm → Spotify track matching |
 | `interleaveShuffle(tracks)` | ui.js | Artist-separated shuffle |
-| `playFromTrack(i)` | player.js | Start playback from track index |
+| `playFromTrack(i, silent)` | player.js | Start playback from track index |
 | `spotifyPlay(uris)` | spotify.js | Play URIs (SDK or remote) |
 | `initSDKPlayer()` | spotify.js | Initialize Web Playback SDK |
 | `pollNowPlaying()` | player.js | Remote fallback: poll current track |
@@ -264,83 +321,28 @@ streaming, user-library-modify, user-library-read
 | `applyGenres()` | ui.js | Genre tags → find artists → fill slots |
 | `buildNarrative()` | ui.js | Artist Mix liner notes (template pool) |
 | `buildTagNarrative()` | ui.js | Tag Mix liner notes (template pool) |
-| `checkLikedTracks()` | ui.js | Batch-check liked status for all tracks |
-| `toggleLikeTrack(idx)` | ui.js | Like/unlike a track on Spotify |
-| `savePlaylist()` | spotify.js | Save to Spotify playlist |
+| `checkLikedTracks(trackIds)` | spotify.js | Batch liked-status check → `Set` of IDs |
+| `toggleLikeTrack(trackId, currentlyLiked)` | spotify.js | Like/unlike one track → new state |
+| `handleTrackHeart(event, i)` | ui.js | Track-row heart click handler |
+| `playerLike()` | player.js | Player-bar heart click handler |
+| `getSpotifyTopTracks(artistName)` | spotify.js | Spotify-popularity track source |
+| `getDiscoveryTracks(similarNames)` | lastfm.js | Similar-artist track pull (Discovery) |
+| `savePlaylist()` | spotify.js | Save to Spotify playlist (auto-named from `currentMixLabel`) |
 | `refreshAccessToken()` | spotify.js | Silent token refresh |
+| `setEntry(mode)` / `enterHeroMode()` / `exitHeroMode()` | ui.js | View state machine |
 
 ---
 
-## Claude Code session plan
+## Session history
 
-### Session 1: Bug fixes & polish ✅
-- Fixed SDK token expiry playback loss (proactive refresh, retransfer)
-- Fixed like button endpoints (Feb 2026 Spotify API: `/me/library` with URIs)
-- Restored retro heart styling on player bar + track rows
-- One-click Save to Spotify (auto-named playlists)
+Phase status lives in `ROADMAP.md` — do not duplicate it here. Written designs for planned work live in `docs/superpowers/specs/` with matching execution plans in `docs/superpowers/plans/`.
 
-### Session 2: Phase 6 — Cloud-Synced Combos ✅
-- Supabase project + `user_combos` table created
-- `supabase.js`: client init, `fetchCloudCombos()`, `upsertCloudCombos()`, `mergeAndSync()`
-- `persistCombos()` fires cloud upsert with `syncInProgress` + `pendingSync` guards
-- `mergeAndSync` called in both init branches (direct auth + token refresh)
-- Offline-resilient: silent failures, localStorage-only fallback
-- Malformed cloud data filtering for robustness
+What past sessions changed, kept here only where it explains a non-obvious decision in the code:
 
-### Session 3: Hybrid Track Sourcing (fresher mixes)
-
-**Problem:** Tracks are sourced 100% from Last.fm `artist.getTopTracks`, which ranks by all-time scrobble count. Older catalog tracks with 20 years of scrobbles always outrank newer singles. Mixes feel skewed toward classic/older material.
-
-**Solution:** Blend Last.fm (deep catalog) with Spotify (current popularity) for track selection. Last.fm stays as the discovery brain (tags, similar artists, bios).
-
-**New function — `spotify.js`:**
-- `getSpotifyTopTracks(artistName)` — searches Spotify for artist → gets Spotify artist ID → calls `GET /artists/{id}/top-tracks` → returns track objects in same shape as `matchToSpotify()` output (already have `uri`, `name`, `artist`, `albumArt`, `duration`)
-- These are Spotify's own popularity-ranked tracks, factoring in recent streaming activity
-
-**Modified function — `generate()` in `ui.js`:**
-- For each artist, fetch from **both** sources in parallel:
-  - Last.fm `artist.getTopTracks` (existing) — the deep catalog
-  - Spotify `GET /artists/{id}/top-tracks` (new) — current popularity
-- Merge and deduplicate by normalized track name
-- Track mode controls the blend:
-  - **Top Hits** → Spotify top tracks only (freshest, most streamed now)
-  - **Deep Cuts** → Last.fm ranks 11–50 only (unchanged, catalog deep pulls)
-  - **Mix** → half Spotify top, half Last.fm deep cuts
-  - **Discovery** → similar artists' Spotify top tracks (instead of Last.fm top tracks)
-
-**Modified function — `generateTagMix()` in `ui.js` (optional enhancement):**
-- After fetching Last.fm `tag.getTopTracks`, identify top artists in the pool
-- Also fetch their Spotify top tracks and blend into the pool
-- Gives Tag Mix a fresher feel without changing the tag-based discovery
-
-**What to store — `config.js` / artist objects:**
-- When user selects an artist via search, the Spotify artist ID is already in the search result (`data.artists.items[0].id`)
-- Store it in the artist object: `{ name, image, sub, spotifyId }`
-- `selectArtist()` in ui.js already has access to this data — just add the field
-
-**What stays the same:**
-- `matchToSpotify()` — still used for Last.fm-sourced tracks that need URI matching
-- `interleaveShuffle()`, `renderResults()`, playback, liked songs — unchanged
-- Last.fm tags, similar artists, bios — still the discovery/context brain
-- Smart Suggest, mood presets, genre browser — unchanged
-
-**Files to modify:**
-- `spotify.js` — add `getSpotifyTopTracks(artistName)`
-- `ui.js` — modify `generate()` to blend sources based on mode
-- `ui.js` — modify `selectArtist()` to store `spotifyId`
-- `ui.js` — optionally modify `generateTagMix()` for fresher tag mixes
-
-### Session 4: UX improvements
-- Liked songs heart animation (brief scale pulse on toggle)
-- Loading skeleton for genre grid while tags load
-- "Now playing" mini-indicator in browser tab title (`♫ Track — Artist | SpotiMix`)
-- Reshuffle button should also work for Tag Mix results
-
-### Session 4: Future features to consider
-- Last.fm scrobbling (requires Last.fm OAuth — separate auth flow)
-- Playlist artwork generation (collage from album arts)
-- Share a mix via URL (encode artist/tag names in query params)
-- Queue management (reorder tracks, remove individual tracks)
+- **SDK token expiry** — proactive refresh + retransfer on reconnect (`sdkNeedsRetransfer`), because the SDK silently mutes rather than erroring when its token goes stale
+- **Liked songs** — migrated off the removed `/me/tracks` endpoints to `/me/library` with URI query params (Feb 2026 API)
+- **Cloud-synced combos** — `syncInProgress` / `pendingSync` guards exist because `persistCombos()` can fire while `mergeAndSync()` is mid-flight; malformed cloud rows are filtered on read
+- **Hybrid track sourcing** — two follow-up fixes after the initial build: `/artists/{id}/top-tracks` was gone (switched to `/search`), and Discovery mode had dropped the main artists' own tracks
 
 ---
 

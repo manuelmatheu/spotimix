@@ -1,0 +1,228 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-12T00:00:00Z",
+  "title": "Design System: SpotiMix",
+  "extensions": {
+    "colorMeta": {
+      "cream-stock": {
+        "role": "neutral",
+        "displayName": "Cream Stock",
+        "canonical": "oklch(0.95 0.012 85)",
+        "tonalRamp": ["oklch(0.15 0.008 85)", "oklch(0.27 0.010 85)", "oklch(0.40 0.012 85)", "oklch(0.52 0.014 85)", "oklch(0.65 0.014 85)", "oklch(0.78 0.013 85)", "oklch(0.88 0.012 85)", "oklch(0.95 0.012 85)"]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "oklch(0.18 0.020 70)",
+        "tonalRamp": ["oklch(0.15 0.018 70)", "oklch(0.18 0.020 70)", "oklch(0.28 0.020 70)", "oklch(0.40 0.018 70)", "oklch(0.55 0.015 70)", "oklch(0.70 0.012 70)", "oklch(0.85 0.010 70)", "oklch(0.95 0.006 70)"]
+      },
+      "rust": {
+        "role": "primary",
+        "displayName": "Rust",
+        "canonical": "oklch(0.55 0.160 38)",
+        "tonalRamp": ["oklch(0.15 0.060 38)", "oklch(0.26 0.100 38)", "oklch(0.37 0.140 38)", "oklch(0.47 0.160 38)", "oklch(0.55 0.160 38)", "oklch(0.68 0.130 38)", "oklch(0.82 0.080 38)", "oklch(0.95 0.030 38)"]
+      },
+      "rust-press": {
+        "role": "primary",
+        "displayName": "Rust Press",
+        "canonical": "oklch(0.50 0.155 38)"
+      },
+      "gold": {
+        "role": "secondary",
+        "displayName": "Faded Gold",
+        "canonical": "oklch(0.74 0.110 82)",
+        "tonalRamp": ["oklch(0.18 0.040 82)", "oklch(0.30 0.060 82)", "oklch(0.43 0.080 82)", "oklch(0.55 0.100 82)", "oklch(0.66 0.110 82)", "oklch(0.74 0.110 82)", "oklch(0.86 0.070 82)", "oklch(0.95 0.030 82)"]
+      },
+      "sage": {
+        "role": "tertiary",
+        "displayName": "Dusty Sage",
+        "canonical": "oklch(0.52 0.050 145)",
+        "tonalRamp": ["oklch(0.15 0.020 145)", "oklch(0.25 0.030 145)", "oklch(0.35 0.040 145)", "oklch(0.44 0.050 145)", "oklch(0.52 0.050 145)", "oklch(0.66 0.050 145)", "oklch(0.81 0.040 145)", "oklch(0.95 0.015 145)"]
+      },
+      "tape-label": {
+        "role": "neutral",
+        "displayName": "Tape Label",
+        "canonical": "oklch(0.90 0.025 88)",
+        "tonalRamp": ["oklch(0.16 0.010 88)", "oklch(0.28 0.015 88)", "oklch(0.41 0.020 88)", "oklch(0.54 0.023 88)", "oklch(0.67 0.025 88)", "oklch(0.79 0.025 88)", "oklch(0.90 0.025 88)", "oklch(0.96 0.012 88)"]
+      },
+      "surface-paper": {
+        "role": "neutral",
+        "displayName": "Surface Paper",
+        "canonical": "#FFFFFF",
+        "note": "Light theme card and chip faces only. Do not extend to new surfaces; take Cream Stock or Tape Label instead."
+      },
+      "spotify-green": {
+        "role": "neutral",
+        "displayName": "Borrowed Green",
+        "canonical": "oklch(0.68 0.185 148)",
+        "note": "Quarantined to the connect button and the live-session dot. Spotify's color, not SpotiMix's."
+      },
+      "ink-ground-dark": { "role": "neutral", "displayName": "Ink Ground", "canonical": "oklch(0.16 0.012 30)" },
+      "parchment-dark": { "role": "neutral", "displayName": "Parchment", "canonical": "oklch(0.90 0.015 82)" },
+      "surface-dark": { "role": "neutral", "displayName": "Surface Dark", "canonical": "oklch(0.22 0.012 70)" },
+      "input-dark": { "role": "neutral", "displayName": "Input Dark", "canonical": "oklch(0.25 0.015 75)" },
+      "rust-dark": { "role": "primary", "displayName": "Rust (Dark Theme)", "canonical": "oklch(0.64 0.150 40)" },
+      "gold-dark": { "role": "secondary", "displayName": "Faded Gold (Dark Theme)", "canonical": "oklch(0.80 0.105 84)" },
+      "sage-dark": { "role": "tertiary", "displayName": "Dusty Sage (Dark Theme)", "canonical": "oklch(0.60 0.050 145)" },
+      "error-wash": { "role": "neutral", "displayName": "Error Wash", "canonical": "oklch(0.96 0.020 30)" },
+      "error-wash-dark": { "role": "neutral", "displayName": "Error Wash (Dark Theme)", "canonical": "oklch(0.24 0.040 30)" }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "The masthead only. One per page." },
+      "headline": { "displayName": "Headline", "purpose": "The results title, the one heading inside a generated mix." },
+      "title": { "displayName": "Title", "purpose": "Modal titles." },
+      "marker": { "displayName": "Marker", "purpose": "Playfair italic as the handwritten layer: slot numbers, progress percentage, empty-avatar initials. Never prose, never a label." },
+      "body": { "displayName": "Body", "purpose": "Liner-notes prose and input text. Measure capped at 65 to 75ch." },
+      "body-quiet": { "displayName": "Body Quiet", "purpose": "Supporting copy at 300 weight and reduced opacity." },
+      "label": { "displayName": "Label", "purpose": "Section, field and option-group labels. Uppercase mono at 0.4 to 0.5 opacity." },
+      "label-loud": { "displayName": "Label Loud", "purpose": "Button type. Uppercase mono at full opacity." },
+      "meta": { "displayName": "Meta", "purpose": "Data: artist lines, durations, timestamps. Mono at 0.35 to 0.45 opacity." }
+    },
+    "shadows": [
+      { "name": "rest", "value": "3px 3px 0 var(--card-shadow, #1A1208)", "purpose": "The default struck state: filled artist slots, primary and secondary buttons, saved combos." },
+      { "name": "lift", "value": "4px 4px 0 var(--card-shadow, #1A1208)", "purpose": "Hover, paired with transform: translate(-1px,-1px). The shadow grows by the pixel the element moved." },
+      { "name": "small-lift", "value": "2px 2px 0 var(--card-shadow, #1A1208)", "purpose": "Chips, mood cards, combo cards, and every lifted surface below 580px where 3px is too loud." },
+      { "name": "dialog", "value": "6px 6px 0 var(--card-shadow, #1A1208)", "purpose": "Modals only, with a 2px foreground border. The heaviest strike in the system." },
+      { "name": "seated-tab", "value": "0 1px 3px rgba(26,18,8,0.12)", "purpose": "Documented soft-shadow exception: the active segment of a toggle, reading as a key seated in a slot." },
+      { "name": "player-lift", "value": "0 -2px 12px rgba(0,0,0,0.25)", "purpose": "Documented soft-shadow exception: the fixed player bar throwing shadow upward onto the page it overlays." }
+    ],
+    "motion": [
+      { "name": "press", "value": "transform 80ms, box-shadow 80ms", "purpose": "Button and card press feedback. The fastest channel in the system." },
+      { "name": "state", "value": "120ms", "purpose": "Default for border-color, background, opacity and color state changes on chips, inputs and controls." },
+      { "name": "row-wash", "value": "background 80ms", "purpose": "Track row and autocomplete row hover." },
+      { "name": "collapse", "value": "max-height 400ms ease, opacity 250ms ease", "purpose": "Hero-mode input collapse. The one deliberate layout-property animation in the system." },
+      { "name": "toast-overshoot", "value": "cubic-bezier(0.34,1.56,0.64,1) 280ms", "purpose": "Toast entry and the heart scale pulse. The only overshoot curve, reserved for confirmation of a user action." },
+      { "name": "fade-in", "value": "fadeIn 200ms ease both", "purpose": "List and chip entry, staggered 25ms per track row up to row 15." },
+      { "name": "spin", "value": "spin 800ms linear infinite", "purpose": "The liner-notes loading ring, a rust-topped 14px circle." }
+    ],
+    "breakpoints": [
+      { "name": "mobile", "value": "580px" },
+      { "name": "column-max", "value": "780px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The single committed action on a screen: generate, save, connect.",
+      "html": "<button class='ds-btn ds-btn-primary'>Generate SpotiMix</button>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; gap: 8px; font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; border: none; border-radius: 4px; cursor: pointer; padding: 12px 20px; transition: transform 80ms, box-shadow 80ms, background 120ms; } .ds-btn-primary { background: var(--rust, #C84B1F); color: var(--bg, #F5F0E8); box-shadow: 3px 3px 0 var(--card-shadow, #1A1208); } .ds-btn-primary:hover { background: #B0421A; box-shadow: 4px 4px 0 var(--card-shadow, #1A1208); transform: translate(-1px,-1px); } .ds-btn-primary:focus-visible { outline: 2px solid var(--fg, #1A1208); outline-offset: 2px; } .ds-btn-primary:active { transform: translateY(1px); box-shadow: none; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Peer actions beside the primary one. The full-opacity border carries the identity, so hover changes elevation only.",
+      "html": "<button class='ds-btn ds-btn-secondary'>↺ Reshuffle</button>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; gap: 8px; font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; border: none; border-radius: 4px; cursor: pointer; padding: 12px 20px; transition: transform 80ms, box-shadow 80ms, background 120ms; } .ds-btn-secondary { background: var(--bg, #F5F0E8); color: var(--fg, #1A1208); border: 1.5px solid var(--fg, #1A1208); box-shadow: 3px 3px 0 var(--card-shadow, #1A1208); } .ds-btn-secondary:hover { box-shadow: 4px 4px 0 var(--card-shadow, #1A1208); transform: translate(-1px,-1px); } .ds-btn-secondary:focus-visible { outline: 2px solid var(--rust, #C84B1F); outline-offset: 2px; } .ds-btn-secondary:active { transform: translateY(1px); box-shadow: none; }"
+    },
+    {
+      "name": "Genre Chip",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Unselected genre or suggestion chip. Hover promotes the border to the foreground and takes Small Lift.",
+      "html": "<button class='ds-chip'>post-punk</button>",
+      "css": ".ds-chip { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.04em; padding: 8px 14px; border-radius: 4px; background: var(--surface, #FFFFFF); border: 1.5px solid var(--border, rgba(26,18,8,0.12)); color: var(--fg, #1A1208); cursor: pointer; transition: border-color 120ms, box-shadow 120ms, transform 80ms, background 120ms; } .ds-chip:hover { border-color: var(--fg, #1A1208); box-shadow: 2px 2px 0 var(--card-shadow, #1A1208); transform: translate(-1px,-1px); } .ds-chip:focus-visible { outline: 2px solid var(--rust, #C84B1F); outline-offset: 2px; } .ds-chip:active { transform: translateY(0); box-shadow: none; }"
+    },
+    {
+      "name": "Genre Chip (Selected)",
+      "kind": "chip",
+      "refersTo": "chip-selected",
+      "description": "Selected state is a full inversion to rust. There is no intermediate state between unselected and selected.",
+      "html": "<button class='ds-chip ds-chip-selected'>shoegaze</button>",
+      "css": ".ds-chip { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.04em; padding: 8px 14px; border-radius: 4px; cursor: pointer; transition: border-color 120ms, box-shadow 120ms, transform 80ms, background 120ms; } .ds-chip-selected { background: var(--rust, #C84B1F); color: var(--bg, #F5F0E8); border: 1.5px solid var(--rust, #C84B1F); } .ds-chip-selected:hover { box-shadow: 2px 2px 0 var(--card-shadow, #1A1208); transform: translate(-1px,-1px); } .ds-chip-selected:active { transform: translateY(0); box-shadow: none; }"
+    },
+    {
+      "name": "Entry Segment Control",
+      "kind": "nav",
+      "refersTo": "segment-active",
+      "description": "The whole navigation model: two peer entry points in one recessed track. The active segment takes the page ground with the one soft shadow in the system.",
+      "html": "<div class='ds-seg'><button class='ds-seg-btn ds-seg-active'>Search artists</button><button class='ds-seg-btn'>Browse genres</button></div>",
+      "css": ".ds-seg { display: inline-flex; background: rgba(26,18,8,0.08); border-radius: 3px; padding: 2px; gap: 2px; } .ds-seg-btn { font-family: 'DM Mono', monospace; font-size: 10px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; border: none; background: transparent; color: var(--fg, #1A1208); opacity: 0.45; padding: 7px 14px; border-radius: 2px; cursor: pointer; transition: all 120ms; } .ds-seg-btn:hover { opacity: 0.75; } .ds-seg-btn:focus-visible { outline: 2px solid var(--rust, #C84B1F); outline-offset: 1px; } .ds-seg-active { background: var(--bg, #F5F0E8); opacity: 1; box-shadow: 0 1px 3px rgba(26,18,8,0.12); }"
+    },
+    {
+      "name": "Artist Slot (Filled)",
+      "kind": "card",
+      "refersTo": "artist-slot",
+      "description": "Signature component. The Playfair italic slot number bleeds over the top border on a ground-colored patch, the way a number is written onto a printed card.",
+      "html": "<div class='ds-slot'><span class='ds-slot-num'>1</span><div class='ds-slot-body'><div class='ds-slot-avatar'>N</div><div class='ds-slot-info'><div class='ds-slot-name'>Nick Cave</div><div class='ds-slot-sub'>2.1M listeners</div></div><button class='ds-slot-remove' aria-label='Remove artist'>×</button></div></div>",
+      "css": ".ds-slot { position: relative; background: var(--surface, #FFFFFF); border: 1.5px solid var(--fg, #1A1208); border-radius: 4px; min-height: 80px; box-shadow: 3px 3px 0 var(--card-shadow, #1A1208); max-width: 260px; } .ds-slot-num { position: absolute; top: -10px; left: 12px; font-family: 'Playfair Display', Georgia, serif; font-style: italic; font-size: 13px; color: var(--rust, #C84B1F); background: var(--bg, #F5F0E8); padding: 0 4px; line-height: 1; } .ds-slot-body { display: flex; padding: 14px; align-items: center; gap: 10px; } .ds-slot-avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--tape-bg, #E8DFC8); border: 2px solid var(--fg, #1A1208); display: flex; align-items: center; justify-content: center; font-family: 'Playfair Display', Georgia, serif; font-style: italic; font-size: 18px; color: var(--fg, #1A1208); opacity: 0.5; flex-shrink: 0; } .ds-slot-info { flex: 1; min-width: 0; } .ds-slot-name { font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; color: var(--fg, #1A1208); } .ds-slot-sub { font-family: 'DM Mono', monospace; font-size: 10px; opacity: 0.4; margin-top: 2px; color: var(--fg, #1A1208); } .ds-slot-remove { background: none; border: none; cursor: pointer; color: var(--fg, #1A1208); opacity: 0.3; padding: 4px; font-size: 16px; line-height: 1; transition: opacity 120ms, color 120ms; } .ds-slot-remove:hover { opacity: 0.9; color: var(--rust, #C84B1F); }"
+    },
+    {
+      "name": "Track Row (Now Playing)",
+      "kind": "custom",
+      "refersTo": "track-item",
+      "description": "Signature component. The number column cross-fades to a play icon in a fixed 22px box so the row never reflows; the now-playing row washes rust at 7 percent and pins the icon visible.",
+      "html": "<div class='ds-track-list'><div class='ds-track'><div class='ds-track-num-wrap'><span class='ds-track-num'>3</span><span class='ds-track-play'>▶</span></div><div class='ds-track-thumb'></div><div class='ds-track-info'><div class='ds-track-name'>Red Right Hand</div><div class='ds-track-artist'>Nick Cave &amp; The Bad Seeds</div></div><span class='ds-badge ds-badge-deep'>deep</span><span class='ds-track-dur'>6:11</span><button class='ds-heart ds-heart-liked' aria-label='Unlike'><svg viewBox='0 0 24 24' fill='currentColor' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z'/></svg></button></div><div class='ds-track ds-track-playing'><div class='ds-track-num-wrap'><span class='ds-track-num'>4</span><span class='ds-track-play'>▶</span></div><div class='ds-track-thumb'></div><div class='ds-track-info'><div class='ds-track-name'>The Mercy Seat</div><div class='ds-track-artist'>Nick Cave &amp; The Bad Seeds</div></div><span class='ds-badge ds-badge-top'>top</span><span class='ds-track-dur'>7:18</span><button class='ds-heart' aria-label='Like'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z'/></svg></button></div></div>",
+      "css": ".ds-track-list { border: 1.5px solid var(--border, rgba(26,18,8,0.12)); border-radius: 4px; overflow: hidden; background: var(--surface, #FFFFFF); max-width: 460px; } .ds-track { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-bottom: 1px solid var(--border-s, rgba(26,18,8,0.06)); transition: background 80ms; cursor: pointer; color: var(--fg, #1A1208); font-family: 'DM Sans', sans-serif; } .ds-track:last-child { border-bottom: none; } .ds-track:hover { background: var(--tape-bg, #E8DFC8); } .ds-track-num-wrap { position: relative; width: 22px; align-self: stretch; flex-shrink: 0; } .ds-track-num, .ds-track-play { position: absolute; inset: 0; display: flex; align-items: center; justify-content: flex-end; font-size: 11px; transition: opacity 100ms; } .ds-track-num { font-family: 'DM Mono', monospace; opacity: 0.25; } .ds-track-play { opacity: 0; } .ds-track:hover .ds-track-num { opacity: 0; } .ds-track:hover .ds-track-play { opacity: 1; } .ds-track-thumb { width: 36px; height: 36px; border-radius: 2px; background: var(--tape-bg, #E8DFC8); flex-shrink: 0; } .ds-track-info { flex: 1; min-width: 0; } .ds-track-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .ds-track-artist { font-family: 'DM Mono', monospace; font-size: 11px; opacity: 0.45; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .ds-badge { font-family: 'DM Mono', monospace; font-size: 8px; letter-spacing: 0.1em; text-transform: uppercase; padding: 2px 6px; border-radius: 2px; flex-shrink: 0; } .ds-badge-top { background: var(--gold, #D4A843); color: var(--bg, #F5F0E8); } .ds-badge-deep { background: var(--sage, #5A7A5C); color: #FFFFFF; } .ds-track-dur { font-family: 'DM Mono', monospace; font-size: 11px; opacity: 0.35; flex-shrink: 0; } .ds-heart { background: none; border: none; cursor: pointer; display: inline-flex; padding: 4px; flex-shrink: 0; color: var(--fg, #1A1208); opacity: 0.15; transition: opacity 120ms, color 120ms, transform 120ms; } .ds-heart svg { width: 14px; height: 14px; } .ds-track:hover .ds-heart { opacity: 0.35; } .ds-heart:hover { opacity: 0.5; } .ds-heart-liked { color: var(--rust, #C84B1F); opacity: 0.8; } .ds-heart-liked:hover { opacity: 1; transform: scale(1.15); } .ds-track-playing { background: rgba(200,75,31,0.07); } .ds-track-playing .ds-track-name { color: var(--rust, #C84B1F); } .ds-track-playing .ds-track-num { opacity: 0; } .ds-track-playing .ds-track-play { opacity: 1; color: var(--rust, #C84B1F); }"
+    },
+    {
+      "name": "Player Bar",
+      "kind": "custom",
+      "refersTo": "player-bar",
+      "description": "Signature component. The only inverted surface besides the toast: ink ground, cream foreground, shadow thrown upward, so it reads as hardware below the page rather than a card on it.",
+      "html": "<div class='ds-pb'><div class='ds-pb-art'></div><div class='ds-pb-info'><div class='ds-pb-name'>The Mercy Seat</div><div class='ds-pb-artist'>Nick Cave</div></div><button class='ds-pb-heart' aria-label='Like'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z'/></svg></button><div class='ds-pb-controls'><button class='ds-pb-btn' aria-label='Previous'>⏮</button><button class='ds-pb-btn ds-pb-play' aria-label='Pause'>⏸</button><button class='ds-pb-btn' aria-label='Next'>⏭</button></div><div class='ds-pb-progress-wrap'><span class='ds-pb-time'>2:47</span><div class='ds-pb-progress'><div class='ds-pb-fill'></div></div><span class='ds-pb-time'>7:18</span></div></div>",
+      "css": ".ds-pb { display: flex; align-items: center; gap: 12px; padding: 10px 20px; background: var(--fg, #1A1208); color: var(--bg, #F5F0E8); box-shadow: 0 -2px 12px rgba(0,0,0,0.25); font-family: 'DM Sans', sans-serif; border-radius: 4px; } .ds-pb-art { width: 42px; height: 42px; border-radius: 3px; background: rgba(255,255,255,0.1); flex-shrink: 0; } .ds-pb-info { flex: 0 1 160px; min-width: 0; overflow: hidden; } .ds-pb-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .ds-pb-artist { font-family: 'DM Mono', monospace; font-size: 11px; opacity: 0.6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .ds-pb-heart { background: none; border: none; cursor: pointer; display: inline-flex; padding: 6px; color: inherit; opacity: 0.7; flex-shrink: 0; transition: opacity 100ms, transform 120ms; } .ds-pb-heart svg { width: 14px; height: 14px; } .ds-pb-heart:hover { opacity: 1; } .ds-pb-controls { display: flex; align-items: center; gap: 4px; flex-shrink: 0; } .ds-pb-btn { background: none; border: none; color: inherit; cursor: pointer; font-size: 14px; padding: 6px; line-height: 1; opacity: 0.7; transition: opacity 100ms; } .ds-pb-btn:hover { opacity: 1; } .ds-pb-play { font-size: 20px; opacity: 1; } .ds-pb-progress-wrap { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; } .ds-pb-time { font-family: 'DM Mono', monospace; font-size: 10px; opacity: 0.5; flex-shrink: 0; width: 36px; } .ds-pb-progress { flex: 1; height: 4px; background: rgba(128,128,128,0.3); border-radius: 2px; cursor: pointer; overflow: hidden; transition: height 100ms; } .ds-pb-progress:hover { height: 6px; } .ds-pb-fill { height: 100%; background: var(--rust, #C84B1F); border-radius: 2px; width: 38%; }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "text-input",
+      "description": "Focus promotes the border to full-opacity foreground. No ring, no glow, no color shift.",
+      "html": "<div class='ds-field'><label class='ds-field-label' for='ds-pl'>Playlist name</label><input class='ds-input' id='ds-pl' type='text' value='Nick Cave × PJ Harvey' /></div>",
+      "css": ".ds-field { max-width: 320px; } .ds-field-label { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; opacity: 0.5; display: block; margin-bottom: 6px; color: var(--fg, #1A1208); } .ds-input { width: 100%; border: 1.5px solid var(--border, rgba(26,18,8,0.12)); background: var(--input-bg, #FFFFFF); border-radius: 4px; padding: 10px 12px; font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--fg, #1A1208); outline: none; transition: border-color 120ms; } .ds-input:focus { border-color: var(--fg, #1A1208); } .ds-input::placeholder { color: var(--fg, #1A1208); opacity: 0.3; font-weight: 300; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Letterpress Mixtape",
+    "overview": "Every surface in SpotiMix is a printed object. Cards sit on cream stock with ink pressed into them: shadows have a blur radius of zero, offset three pixels down and right, the exact signature of a plate struck into paper. Hover lifts an element one pixel toward the light and grows the shadow to match; pressing it returns it flat. Nothing glows, nothing floats, nothing frosts. A fixed scanline overlay at 1.8% opacity sits above the whole page, the faint texture of a photocopied sleeve.\n\nThe type carries the rest. Playfair Display holds the masthead and the section titles, and its italic is reserved for a handwritten layer: the numbers beside each artist slot, the progress percentage, the initials in an empty avatar. DM Mono in wide uppercase tracking handles every small label, the way a printed sleeve captions its panels. DM Sans carries prose at a light weight. Three typefaces, three jobs, no overlap.\n\nThe system is compact and single-column, 780px at most, and it rejects the generic SaaS dashboard outright: no gradient hero metric, no identical icon-plus-heading-plus-text card grid, no purple-to-blue gradients, no glassmorphic floating panels. Density comes from small type on tight rows, not from cards inside cards. When a mix is generated the inputs collapse to zero height and the result takes the page.",
+    "keyCharacteristics": [
+      "Hard offset shadows (3px 3px 0), never blurred",
+      "Cream and ink, both tinted warm, never neutral grey",
+      "Rust as the single voice of state: live, selected, loved",
+      "Playfair for structure, Playfair italic for the handwritten layer, DM Mono for every label, DM Sans for prose",
+      "4px radius throughout, near-square, the corner of a card stock",
+      "One 580px breakpoint, single-column at rest",
+      "A scanline texture over the entire page"
+    ],
+    "rules": [
+      { "name": "The One Voice Rule", "body": "Rust is the only accent that signals state. If a new element needs to say live, selected, or loved, it says it in rust. Gold and sage classify content and must never become interactive colors.", "section": "colors" },
+      { "name": "The Borrowed Green Rule", "body": "Spotify Green appears in exactly two places: the connect button and the 7px live-session dot. It is Spotify's color, not SpotiMix's. Introducing it anywhere else makes the app look like a Spotify clone, which is the one identity confusion this palette exists to prevent.", "section": "colors" },
+      { "name": "The Warm Neutral Rule", "body": "No pure grey, ever. Borders are ink at 12% and 6% alpha, never a grey hex. A neutral that does not carry the ink hue is a bug.", "section": "colors" },
+      { "name": "The Mono Label Rule", "body": "Every uppercase label in the system is DM Mono with at least 0.08em tracking. DM Sans is never uppercased and never tracked out. A new label that is uppercase and sans is wrong.", "section": "typography" },
+      { "name": "The Italic Marker Rule", "body": "Playfair italic marks human annotation, never structure and never prose. It appears where a person would have written on the object by hand.", "section": "typography" },
+      { "name": "The Opacity Ladder Rule", "body": "Hierarchy below body size is carried by opacity, not by color: 1.0 for primary text, 0.7 for supporting, 0.55 for tagline and status, 0.4 to 0.5 for labels, 0.25 to 0.35 for row numbers and durations. Do not introduce a new grey to make text quieter; lower the opacity of the foreground.", "section": "typography" },
+      { "name": "The No-Blur Rule", "body": "Elevation shadows have a blur radius of zero. The two soft shadows in the system, Seated Tab and Player Lift, are the complete documented set of exceptions. A new blurred shadow is prohibited.", "section": "elevation" },
+      { "name": "The Press Rule", "body": "Every interactive surface completes the cycle: rest at 3px, lift to 4px and move -1px,-1px on hover, flatten to no shadow on active. Hover without the matching press is an incomplete component.", "section": "elevation" },
+      { "name": "The Sink Rule", "body": "Grouping containers (option rows, tag controls, liner-notes headers) sink: Tape Label background, 1px 6%-alpha border, no shadow. Only content surfaces lift. If everything lifts, nothing does.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do use hard offset shadows with zero blur: 3px 3px 0 at rest, 4px 4px 0 with translate(-1px,-1px) on hover, nothing on active. Complete the whole cycle.",
+      "Do keep rust as the only color that signals state. Live, selected, loved: all rust.",
+      "Do sink grouping containers into Tape Label with a 1px 6%-alpha border and no shadow, and let only content surfaces lift.",
+      "Do write every uppercase label in DM Mono with at least 0.08em tracking, at 0.4 to 0.5 opacity.",
+      "Do reserve Playfair italic for the handwritten layer: slot numbers, the progress percentage, empty-avatar initials.",
+      "Do quiet text by lowering foreground opacity down the established ladder, not by reaching for a new grey.",
+      "Do promote a border to full-opacity foreground to signal filled, focused, or hovered. The border is the primary state channel; the shadow is secondary.",
+      "Do drop to 2px 2px 0 shadows and tighter type at the 580px breakpoint, and keep the single-column layout.",
+      "Do hold WCAG AA contrast in both themes, and add a prefers-reduced-motion guard for the staggered track cascade, the 400ms hero-mode collapse, and the spinner.",
+      "Do pair color with a second signal for every meaningful state: the now-playing row gets an icon swap as well as a wash, a selected chip fully inverts, a liked heart fills."
+    ],
+    "donts": [
+      "Don't build a generic SaaS dashboard. No gradient hero metric (big number, small label, supporting stats). No identical icon-plus-heading-plus-text card grids. No purple-to-blue gradients. No glassmorphic floating panels.",
+      "Don't add a blurred elevation shadow. The two soft shadows that exist, the active segment tab and the player bar, are the complete set of exceptions.",
+      "Don't introduce Spotify Green beyond the connect button and the live dot. Borrowed green spreading across the UI turns SpotiMix into a Spotify clone.",
+      "Don't use a neutral grey anywhere. Tint every neutral toward the ink hue, and write borders as ink alpha.",
+      "Don't extend #FFFFFF beyond the existing light-theme card and chip faces. New surfaces take Cream Stock or Tape Label.",
+      "Don't make gold or sage interactive. They classify content, work in flight versus hit versus deep cut, and nothing else.",
+      "Don't uppercase or track out DM Sans. Uppercase belongs to DM Mono.",
+      "Don't set Playfair below 13px or above 26px outside the masthead, and never as body copy.",
+      "Don't wrap list rows in individual cards, and never nest a card inside a card. The track list is one bordered block with hairline dividers.",
+      "Don't add a second radius scale. 4px, with 2px and 3px for small inset chrome and 50% for avatars.",
+      "Don't animate layout properties. The hero-mode collapse animates max-height and opacity deliberately and is the documented exception; new motion belongs on transform and opacity.",
+      "Don't add a persistent sidebar or top nav. The system is one 780px column with two peer entry tabs.",
+      "Don't raise the scanline overlay above 2% opacity or animate it. It is texture, not an effect."
+    ]
+  }
+}
