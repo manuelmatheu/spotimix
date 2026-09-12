@@ -95,6 +95,7 @@ function updatePlayerBarHeart(trackId) {
   const liked = !!(trackId && likedSet.has(trackId));
   btn.classList.toggle('liked', liked);
   btn.innerHTML = liked ? HEART_FILLED : HEART_EMPTY;
+  btn.title = liked ? 'Remove from Liked Songs' : 'Save to Liked Songs';
   btn.dataset.trackId = trackId || '';
 }
 
@@ -329,7 +330,9 @@ async function playFromTrack(i, silent = false) {
       ? `Playing ${generatedTracks.length} tracks`
       : `Playing from track ${i + 1}`);
   } catch {
-    if (!silent) showError('Playback failed. Open Spotify on any device first, then try again.');
+    // Always surface this, even on autoplay (silent only suppresses the success
+    // toast). Otherwise a finished mix just sits there in silence with no reason.
+    showError('Playback failed. Open Spotify on any device first, then try again.');
   }
 }
 

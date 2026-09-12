@@ -133,6 +133,7 @@
       <hr class="divider" />
       <div class="results-header">
         <h2 class="results-title">Your SpotiMix</h2>
+        <span class="match-warning" id="match-warning"></span>
       </div>
       <div class="results-actions">
         <button class="btn btn-secondary btn-save" onclick="savePlaylist()">Save to Spotify</button>
@@ -161,7 +162,8 @@
 
 <!-- Player bar -->
 <div class="player-bar" id="player-bar">
-  <img class="pb-art" id="pb-art" src="" alt="" />
+  <!-- no src= until a track loads: an empty src re-requests the page URL -->
+  <img class="pb-art" id="pb-art" alt="" />
   <div class="pb-info">
     <div class="pb-name" id="pb-name"></div>
     <div class="pb-artist" id="pb-artist"></div>

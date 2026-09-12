@@ -235,12 +235,12 @@ async function updateSuggest() {
   let delay = 0;
 
   filteredSimilar.forEach(name => {
-    html += `<button class="suggest-chip artist-suggest" onclick="suggestArtistByName(this,'${esc(name)}')" style="animation-delay:${delay}ms">${esc(name)}</button>`;
+    html += `<button class="suggest-chip artist-suggest" onclick="suggestArtistByName(this,'${escJsAttr(name)}')" style="animation-delay:${delay}ms">${esc(name)}</button>`;
     delay += 30;
   });
 
   rankedTags.forEach(t => {
-    html += `<button class="suggest-chip" onclick="suggestFromTag(this,'${esc(t)}')" style="animation-delay:${delay}ms">${esc(t)}</button>`;
+    html += `<button class="suggest-chip" onclick="suggestFromTag(this,'${escJsAttr(t)}')" style="animation-delay:${delay}ms">${esc(t)}</button>`;
     delay += 30;
   });
 
@@ -494,7 +494,7 @@ async function generateTagContext(tags, tracks) {
   panel.classList.remove('collapsed');
 
   // Show the tags as clickable chips
-  tagsEl.innerHTML = tags.map(t => `<span class="context-tag clickable" onclick="browseFromTag('${esc(t)}')">${esc(t)}</span>`).join('');
+  tagsEl.innerHTML = tags.map(t => `<span class="context-tag clickable" onclick="browseFromTag('${escJsAttr(t)}')">${esc(t)}</span>`).join('');
 
   // Build a tag-specific narrative
   textEl.innerHTML = buildTagNarrative(tags, tracks);
@@ -579,7 +579,7 @@ async function loadGenres() {
 function renderGenreGrid(tags) {
   const grid = document.getElementById('genre-grid');
   grid.innerHTML = tags.map((t, i) =>
-    `<button class="genre-chip${selectedGenres.has(t) ? ' selected' : ''}" onclick="toggleGenre(this,'${esc(t)}')" style="animation-delay:${Math.min(i * 20, 400)}ms">${esc(t)}</button>`
+    `<button class="genre-chip${selectedGenres.has(t) ? ' selected' : ''}" onclick="toggleGenre(this,'${escJsAttr(t)}')" style="animation-delay:${Math.min(i * 20, 400)}ms">${esc(t)}</button>`
   ).join('');
   updateTagMixControls();
 }
@@ -871,6 +871,17 @@ function renderResults(missingCount) {
   document.getElementById('results-section').classList.add('visible');
   enterHeroMode();
 
+  // Unmatched-track warning. undefined means "leave as-is" (reshuffle re-renders
+  // the same tracks, so the count from generation still applies).
+  if (missingCount !== undefined) {
+    const warn = document.getElementById('match-warning');
+    if (warn) {
+      warn.textContent = missingCount > 0
+        ? `${missingCount} track${missingCount === 1 ? '' : 's'} not on Spotify`
+        : '';
+    }
+  }
+
   // Reset save button for the new mix
   const saveBtn = document.querySelector('.btn-save');
   if (saveBtn) {
@@ -901,6 +912,7 @@ function updateTrackRowHeart(i, liked, animate) {
   if (!btn) return;
   btn.classList.toggle('liked', liked);
   btn.innerHTML = liked ? HEART_FILLED : HEART_EMPTY;
+  btn.title = liked ? 'Remove from Liked Songs' : 'Save to Liked Songs';
   if (animate) triggerHeartPop(btn);
 }
 
@@ -1010,7 +1022,14 @@ function chunkArr(a,n) { const c=[]; for(let i=0;i<a.length;i+=n) c.push(a.slice
 function msToTime(ms) { if(!ms) return '--:--'; const s=Math.floor(ms/1000); return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`; }
 function fmtNum(n) { if(n>=1e6) return (n/1e6).toFixed(1)+'M'; if(n>=1e3) return (n/1e3).toFixed(0)+'K'; return String(n); }
 function norm(s) { return String(s).toLowerCase().replace(/[^a-z0-9]/g,''); }
-function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+// For a value going into a JS string literal inside an inline handler attribute,
+// e.g. onclick="f('HERE')". Two layers have to survive: escape for JS first, then
+// for HTML. HTML-escaping alone is not enough — the parser decodes &#39; back to a
+// bare quote before the JS is compiled, so "Guns N' Roses" still ends the string
+// and the click silently dies with a SyntaxError.
+function escJsAttr(s) { return esc(String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'")); }
 
 // ── Mix context (Last.fm-powered narrative) ──────────────────────────────────
 function toggleContext() {
@@ -1039,7 +1058,7 @@ async function generateContext(artistList, similarNames, mode, tracks) {
   const tagSet = new Set();
   allTags.flat().forEach(t => tagSet.add(t));
   const uniqueTags = [...tagSet].slice(0, 12);
-  tagsEl.innerHTML = uniqueTags.map(t => `<span class="context-tag clickable" onclick="browseFromTag('${esc(t)}')">${esc(t)}</span>`).join('');
+  tagsEl.innerHTML = uniqueTags.map(t => `<span class="context-tag clickable" onclick="browseFromTag('${escJsAttr(t)}')">${esc(t)}</span>`).join('');
 
   // Build Last.fm narrative
   textEl.innerHTML = buildNarrative(artistNames, allTags, allBios, similarNames, mode, tracks);
@@ -1104,7 +1123,7 @@ function buildNarrative(names, allTags, allBios, similarNames, mode, tracks) {
 
   // OPENING — 2 artists, shared tags
   const open2shared = sharedTags.length ? [
-    () => `${A} and ${B} both live in the world of ${em(sharedTags[0])}${uniquePerArtist[0][0] ? ' — though ${A} pulls it toward ' + em(uniquePerArtist[0][0]) + ' while ${B} keeps it closer to ' + em(uniquePerArtist[1]?.[0] || sharedTags[0]) : ''}.`,
+    () => `${A} and ${B} both live in the world of ${em(sharedTags[0])}${uniquePerArtist[0][0] ? ` — though ${A} pulls it toward ${em(uniquePerArtist[0][0])} while ${B} keeps it closer to ${em(uniquePerArtist[1]?.[0] || sharedTags[0])}` : ''}.`,
     () => `There's a shared thread of ${sharedTags.slice(0, 2).map(em).join(' and ')} running through both ${A} and ${B}.`,
     () => `${em(sharedTags[0])} is the common language here — ${A} and ${B} just speak it with different accents.`,
     () => `Both rooted in ${em(sharedTags[0])}, ${A} and ${B} approach it from opposite ends of the room.`,
@@ -1285,7 +1304,12 @@ document.addEventListener('keydown', e => {
   if (isTyping()) return;
 
   if (e.key === '?' || (e.key === '/' && e.shiftKey)) { e.preventDefault(); openShortcuts(); return; }
-  if (e.key === 'g' || e.key === 'G') { e.preventDefault(); generate(); return; }
+  // G is mode-aware: on the Browse tab it generates the tag mix, not the artist mix
+  if (e.key === 'g' || e.key === 'G') {
+    e.preventDefault();
+    if (entryMode === 'browse') generateTagMix(); else generate();
+    return;
+  }
   if (e.key === 's' || e.key === 'S') { e.preventDefault(); saveCombo(); return; }
   if (e.key === 'd' || e.key === 'D') { e.preventDefault(); toggleTheme(); return; }
 });

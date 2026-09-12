@@ -392,6 +392,7 @@ function initSDKPlayer() {
   sdkPlayer.addListener('account_error', ({ message }) => {
     console.warn('SDK account error (Premium required):', message);
     sdkReady = false;
+    showError('In-browser playback needs Spotify Premium. Your mix is still ready to save, or play it on another device.');
   });
 
   sdkPlayer.connect();
@@ -403,49 +404,63 @@ window.onSpotifyWebPlaybackSDKReady = () => {
 };
 
 // ── Remote playback controls (fallback when SDK not active) ───────────────────
+// Remote is a first-class surface (it is how mobile plays), so a dead device has
+// to say so. These used to end in `catch {}`, which made every button a no-op
+// with no explanation once the target device went away.
+function remoteLost(e) {
+  if (e) console.warn('remote control failed:', e);
+  showError('Lost the Spotify device. Open Spotify on a device and try again.');
+}
+
 async function remoteTogglePlay() {
   try {
     const state = await fetch('https://api.spotify.com/v1/me/player', {
       headers: { Authorization: 'Bearer ' + accessToken },
     });
-    if (state.status === 204) return;
+    if (state.status === 204) { remoteLost(); return; }
     const data = await state.json();
     const endpoint = data.is_playing ? 'pause' : 'play';
-    await fetch(`https://api.spotify.com/v1/me/player/${endpoint}`, {
+    const r = await fetch(`https://api.spotify.com/v1/me/player/${endpoint}`, {
       method: 'PUT',
       headers: { Authorization: 'Bearer ' + accessToken },
     });
-  } catch {}
+    if (!r.ok && r.status !== 204) remoteLost();
+  } catch (e) { remoteLost(e); }
 }
 
 async function remoteNext() {
   try {
-    await fetch('https://api.spotify.com/v1/me/player/next', {
+    const r = await fetch('https://api.spotify.com/v1/me/player/next', {
       method: 'POST', headers: { Authorization: 'Bearer ' + accessToken },
     });
-  } catch {}
+    if (!r.ok && r.status !== 204) remoteLost();
+  } catch (e) { remoteLost(e); }
 }
 
 async function remotePrev() {
   try {
-    await fetch('https://api.spotify.com/v1/me/player/previous', {
+    const r = await fetch('https://api.spotify.com/v1/me/player/previous', {
       method: 'POST', headers: { Authorization: 'Bearer ' + accessToken },
     });
-  } catch {}
+    if (!r.ok && r.status !== 204) remoteLost();
+  } catch (e) { remoteLost(e); }
 }
 
 async function remoteSeek(ms) {
   try {
-    await fetch(`https://api.spotify.com/v1/me/player/seek?position_ms=${Math.round(ms)}`, {
+    const r = await fetch(`https://api.spotify.com/v1/me/player/seek?position_ms=${Math.round(ms)}`, {
       method: 'PUT', headers: { Authorization: 'Bearer ' + accessToken },
     });
-  } catch {}
+    if (!r.ok && r.status !== 204) remoteLost();
+  } catch (e) { remoteLost(e); }
 }
 
 async function remoteSetVolume(pct) {
+  // Volume is the one control that stays quiet on failure: it is incidental, and
+  // the slider itself is the feedback.
   try {
     await fetch(`https://api.spotify.com/v1/me/player/volume?volume_percent=${Math.round(pct)}`, {
       method: 'PUT', headers: { Authorization: 'Bearer ' + accessToken },
     });
-  } catch {}
+  } catch (e) { console.warn('remote volume failed:', e); }
 }
