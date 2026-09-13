@@ -89,10 +89,12 @@ A phased plan for evolving SpotiMix from a playlist generator into a standalone 
 
 **Goal:** Small touches that make the app feel more polished.
 
-- Liked songs heart animation (brief scale pulse on toggle)
+- ✅ Liked songs heart animation (brief scale pulse on toggle) — `triggerHeartPop()`
 - Loading skeleton for genre grid while tags load
 - "Now playing" mini-indicator in browser tab title (`♫ Track — Artist | SpotiMix`)
 - Reshuffle button should also work for Tag Mix results
+- ✅ Saved combos collapse past four with a "+N more" toggle — `toggleCombos()`
+- ✅ "New Mix" doubles as "Back to mix" so an open picker can be re-collapsed — `toggleMixView()`
 
 ---
 

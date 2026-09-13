@@ -133,6 +133,10 @@ Push to GitHub and connect to Vercel (or any static hosting). No build step need
 
 ## Changelog
 
+### v1.9
+- Saved combos collapse past four, with a "+N more" chip to expand the rest — the picker stays navigable with a large library, and the expanded/collapsed choice is remembered
+- "New Mix" is now a two-state toggle: press it again ("↑ Back to mix") to collapse the picker and put the current mix back in full view
+
 ### v1.8
 - Hybrid track sourcing: Top Hits and Discovery now pull from Spotify search (current popularity) instead of Last.fm all-time scrobbles — mixes feel fresher and more current
 - Mix mode blends Spotify top tracks + Last.fm deep cuts in parallel

@@ -139,7 +139,7 @@
         <button class="btn btn-secondary btn-save" onclick="savePlaylist()">Save to Spotify</button>
         <button class="btn btn-secondary" onclick="reshuffle()">↺ Reshuffle</button>
         <button class="btn btn-secondary btn-save-combo-hero" onclick="saveCombo()" style="display:none;">♡ Save Combo</button>
-        <button class="btn btn-ghost btn-new-mix" onclick="exitHeroMode()">← New Mix</button>
+        <button class="btn btn-ghost btn-new-mix" id="mix-view-toggle" onclick="toggleMixView()"><span id="mix-view-toggle-label">← New Mix</span></button>
       </div>
 
       <div class="mix-context" id="mix-context" style="display:none;">
@@ -195,7 +195,7 @@
   </span>
   <span>
     Built with ❤ by Manuel Matheu with <a href="https://claude.ai" target="_blank" style="color:inherit;text-decoration:underline;">Claude</a> by Anthropic
-    &middot; <a href="#changelog" onclick="document.getElementById('changelog-modal').classList.add('open');return false;" style="color:inherit;text-decoration:underline;">v1.8</a>
+    &middot; <a href="#changelog" onclick="document.getElementById('changelog-modal').classList.add('open');return false;" style="color:inherit;text-decoration:underline;">v1.9</a>
   </span>
 </footer>
 
@@ -208,7 +208,12 @@
     </div>
     <div style="font-family:var(--font-m);font-size:11px;line-height:1.8;opacity:0.75;overflow-y:auto;flex:1;">
       <div style="margin-bottom:16px;">
-        <div style="font-weight:500;color:var(--rust);margin-bottom:4px;">v1.8 &mdash; Current</div>
+        <div style="font-weight:500;color:var(--rust);margin-bottom:4px;">v1.9 &mdash; Current</div>
+        <div>&middot; Saved combos collapse past four &mdash; a "+N more" chip expands the rest, so a big library no longer crowds the picker</div>
+        <div>&middot; "New Mix" is now a toggle: press it again ("Back to mix") to collapse the picker and return to your mix</div>
+      </div>
+      <div style="margin-bottom:16px;">
+        <div style="font-weight:500;color:var(--fg);opacity:0.5;margin-bottom:4px;">v1.8</div>
         <div>&middot; Hybrid track sourcing: Top Hits and Discovery now use Spotify search (current popularity) instead of Last.fm all-time scrobbles</div>
         <div>&middot; Mix mode blends Spotify top tracks + Last.fm deep cuts</div>
         <div>&middot; Discovery: your artists + similar artists, all sourced from Spotify</div>

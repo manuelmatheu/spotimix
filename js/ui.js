@@ -54,11 +54,14 @@ function selectArtist(idx, i) {
 function removeArtist(idx) { artists[idx] = null; renderSlot(idx); updateComboSaveBtn(); updateSuggest(); }
 
 // ── Saved Combos ──────────────────────────────────────────────────────────────
+const COMBOS_PREVIEW = 4; // combos shown before the "+N more" toggle kicks in
+
 function loadCombos() {
   try {
     const raw = localStorage.getItem('mixtape_combos');
     if (raw) savedCombos = JSON.parse(raw);
   } catch { savedCombos = []; }
+  try { combosExpanded = localStorage.getItem('mixtape_combos_expanded') === '1'; } catch {}
 }
 
 function persistCombos() {
@@ -115,11 +118,18 @@ function updateComboSaveBtn() {
   if (btn) btn.style.display = active >= 2 ? '' : 'none';
 }
 
+function toggleCombos() {
+  combosExpanded = !combosExpanded;
+  try { localStorage.setItem('mixtape_combos_expanded', combosExpanded ? '1' : '0'); } catch {}
+  renderCombos();
+}
+
 function renderCombos() {
   const wrap = document.getElementById('combos-scroll');
   if (!wrap) return;
   savedCombos.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-  wrap.innerHTML = savedCombos.map((combo, ci) => {
+  // Map over the whole list first so `ci` stays the real savedCombos index, then slice.
+  const cards = savedCombos.map((combo, ci) => {
     const avatars = combo.artists.map(a =>
       a.image
         ? `<img src="${esc(a.image)}" alt="" onerror="this.outerHTML='<span class=\\'combo-avatar-ph\\'>${esc(a.name[0])}</span>'" />`
@@ -131,7 +141,17 @@ function renderCombos() {
       <span class="combo-names">${esc(names)}</span>
       <button class="combo-remove" onclick="removeCombo(${ci},event)" title="Remove combo">✕</button>
     </div>`;
-  }).join('');
+  });
+
+  const hidden = cards.length - COMBOS_PREVIEW;
+  const shown  = (combosExpanded || hidden <= 0) ? cards : cards.slice(0, COMBOS_PREVIEW);
+  let html = shown.join('');
+  if (hidden > 0) {
+    const label = combosExpanded ? '↑ Show less' : `+ ${hidden} more`;
+    const title = combosExpanded ? 'Collapse saved combos' : `Show ${hidden} more saved combo${hidden > 1 ? 's' : ''}`;
+    html += `<button class="combos-toggle" onclick="toggleCombos()" title="${esc(title)}">${esc(label)}</button>`;
+  }
+  wrap.innerHTML = html;
 }
 
 // ── Slots ─────────────────────────────────────────────────────────────────────
@@ -336,11 +356,24 @@ let entryMode = 'search';
 let genresLoaded = false;
 let selectedGenres = new Set();
 
+function setMixViewLabel(inHero) {
+  const label = document.getElementById('mix-view-toggle-label');
+  if (label) label.textContent = inHero ? '← New Mix' : '↑ Back to mix';
+  const btn = document.getElementById('mix-view-toggle');
+  if (btn) btn.title = inHero ? 'Pick new artists or genres' : 'Collapse the picker and go back to your mix';
+}
+
+function toggleMixView() {
+  if (document.getElementById('app-section').classList.contains('mix-active')) exitHeroMode();
+  else enterHeroMode();
+}
+
 function enterHeroMode() {
   document.getElementById('app-section').classList.add('mix-active');
   document.querySelector('header').classList.add('compact');
   const heroComboBtn = document.querySelector('.btn-save-combo-hero');
   if (heroComboBtn) heroComboBtn.style.display = artists.filter(Boolean).length >= 2 ? '' : 'none';
+  setMixViewLabel(true);
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -351,6 +384,7 @@ function exitHeroMode() {
   document.querySelector('header').classList.remove('compact');
   const heroComboBtn = document.querySelector('.btn-save-combo-hero');
   if (heroComboBtn) heroComboBtn.style.display = 'none';
+  setMixViewLabel(false);
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 

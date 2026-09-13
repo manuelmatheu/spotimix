@@ -59,13 +59,18 @@ All functions and variables are global. No modules, no build step, no bundler.
 
 `index.html` reaches ~22 distinct global functions through inline `onclick` attributes, so **renaming a global function means grepping `index.html` too**. That coupling is why the all-globals rule can't be relaxed one file at a time.
 
-### View state machine (ui.js:339–384)
+### View state machine (ui.js:359–404)
 
 One page, three visual states, all driven by CSS classes:
 
 - `setEntry('search' | 'browse')` — switches the entry tabs (`#entry-search` / `#entry-browse`); calls `exitHeroMode()` first
 - `enterHeroMode()` — adds `.mix-active` to `#app-section`, results take over the viewport. Called at the end of both generate flows
-- `exitHeroMode()` — removes `.mix-active`, back to the picker. Wired to the logo and the "← New Mix" button
+- `exitHeroMode()` — removes `.mix-active`, back to the picker. Wired to the logo
+- `toggleMixView()` — the one button in `.results-actions` flips between the two: `#mix-view-toggle` reads
+  "← New Mix" in hero mode and "↑ Back to mix" once the picker is open, so an existing mix can be
+  re-collapsed instead of being stranded below the picker. `enterHeroMode()` / `exitHeroMode()` each call
+  `setMixViewLabel()`, which is why `setEntry()` and the logo stay correct without knowing about the toggle.
+  The button shows whenever `#results-section` has `.visible`; it no longer hides itself outside hero mode
 - `body.has-player` — added on first playback, reserves bottom padding for the player bar
 
 ### Theme system
@@ -208,6 +213,10 @@ streaming, user-library-modify, user-library-read
 - Compact cards with overlapping avatars below artist grid
 - Deduplicated by artist names (order-independent)
 - `loadCombo(idx)` fills artist slots + triggers suggest update
+- Past `COMBOS_PREVIEW` (4) the list collapses to the 4 newest plus a `+N more` chip; `toggleCombos()` flips it
+  and remembers the choice in `localStorage('mixtape_combos_expanded')`. `renderCombos()` maps over the **whole**
+  array before slicing, so the `ci` baked into `loadCombo(ci)` / `removeCombo(ci)` stays the real `savedCombos`
+  index — slicing first would silently rewire clicks in the hidden tail
 
 ---
 
@@ -273,7 +282,7 @@ Because markup is built as template strings with inline `onclick` attributes, va
 
 ---
 
-## Current version: v1.8
+## Current version: v1.9
 
 ### What's shipped
 1. ✅ Genre Tag Browser — browse genres, multi-select, Spotify artist lookup
@@ -284,6 +293,7 @@ Because markup is built as template strings with inline `onclick` attributes, va
 6. ✅ Liked Songs — heart/like on player bar + track rows
 7. ✅ Cloud-Synced Combos — Supabase sync, merge+dedup, offline-resilient
 8. ✅ Hybrid Track Sourcing — Top Hits/Mix/Discovery use Spotify search (current popularity); Deep Cuts unchanged
+9. ✅ Collapsed Combos + Mix View Toggle — combos list collapses past `COMBOS_PREVIEW`; "← New Mix" doubles as "↑ Back to mix"
 
 ### What's next
 
@@ -327,7 +337,8 @@ Because markup is built as template strings with inline `onclick` attributes, va
 | `getDiscoveryTracks(similarNames)` | lastfm.js | Similar-artist track pull (Discovery) |
 | `savePlaylist()` | spotify.js | Save to Spotify playlist (auto-named from `currentMixLabel`) |
 | `refreshAccessToken()` | spotify.js | Silent token refresh |
-| `setEntry(mode)` / `enterHeroMode()` / `exitHeroMode()` | ui.js | View state machine |
+| `setEntry(mode)` / `enterHeroMode()` / `exitHeroMode()` / `toggleMixView()` | ui.js | View state machine |
+| `toggleCombos()` | ui.js | Expand/collapse the saved-combos list |
 
 ---
 
